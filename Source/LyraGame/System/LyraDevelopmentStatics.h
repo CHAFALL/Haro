@@ -34,6 +34,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lyra")
 	static bool CanPlayerBotsAttack();
 
+	// 몬스터가 플레이어를 공격할 수 있는지?
+	UFUNCTION(BlueprintCallable, Category = "Lyra")
+	static bool CanMonstersAttackPlayer();
+
 	// Finds the most appropriate play-in-editor world to run 'server' cheats on
 	//   This might be the only world if running standalone, the listen server, or the dedicated server
 	static UWorld* FindPlayInEditorAuthorityWorld();

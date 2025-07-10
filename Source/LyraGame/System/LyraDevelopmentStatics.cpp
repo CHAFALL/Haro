@@ -46,6 +46,17 @@ bool ULyraDevelopmentStatics::CanPlayerBotsAttack()
 	return true;
 }
 
+bool ULyraDevelopmentStatics::CanMonstersAttackPlayer()
+{
+#if WITH_EDITOR
+	if (GIsEditor)
+	{
+		return GetDefault<ULyraDeveloperSettings>()->bAllowMonstersAttackPlayer;
+	}
+#endif
+	return true;
+}
+
 //@TODO: Actually want to take a lambda and run on every authority world most of the time...
 UWorld* ULyraDevelopmentStatics::FindPlayInEditorAuthorityWorld()
 {

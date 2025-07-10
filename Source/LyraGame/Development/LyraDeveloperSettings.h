@@ -62,6 +62,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, config, Category=LyraBots)
 	bool bAllowPlayerBotsToAttack = true;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, config, Category = "Lyra Monster")
+	bool bAllowMonstersAttackPlayer = true;
+
 	// Do the full game flow when playing in the editor, or skip 'waiting for player' / etc... game phases?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, config, Category=Lyra)
 	bool bTestFullGameFlowInPIE = false;
