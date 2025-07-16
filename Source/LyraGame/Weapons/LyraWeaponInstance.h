@@ -85,4 +85,16 @@ private:
 
 	double TimeLastEquipped = 0.0;
 	double TimeLastFired = 0.0;
+
+// -----------------------(추가)-------------------------
+public:
+	// 머즐 트랜스폼 가져오기
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual FTransform GetMuzzleTransform() const;
+
+protected:
+	// 머즐 소켓 이름
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	FName MuzzleSocketName = TEXT("Muzzle");
+
 };

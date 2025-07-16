@@ -71,4 +71,27 @@ private:
 
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<AActor>> SpawnedActors;
+
+
+//----------------(추가)-------------------
+public:
+
+
+	/**
+	* 주 장비 액터 (보통 0번)를 가져오는 함수 (헬퍼 함수)
+	* 이를 통해 무기 액터를 가져오는 곳에 쓰일 것이다.
+	* 무기 액터임이 보장되는 이유 :
+	* - ULyraEquipmentDefinition의 ActorsToSpawn 배열에서
+	*   일관되게 0번을 주 장비 액터(무기 메시)로 정의함
+	* - SpawnEquipmentActors()에서 ActorsToSpawn 배열을 순서대로 순회하여
+	*   SpawnedActors 배열에 동일한 순서로 추가하므로 순서가 보장됨
+	* - 따라서 Definition의 0번 = Runtime의 SpawnedActors[0]로 1:1 매칭됨
+	*/
+	
+	UFUNCTION(BlueprintPure, Category = Equipment)
+	AActor* GetPrimaryActor() const
+	{
+		return (GetSpawnedActors().Num() > 0) ? GetSpawnedActors()[0] : nullptr;
+	}
+
 };

@@ -9,6 +9,8 @@
 #include "GameFramework/InputDeviceSubsystem.h"
 #include "GameFramework/InputDeviceProperties.h"
 #include "Character/LyraHealthComponent.h"
+#include "Character/LyraCharacter.h"
+#include "LyraLogChannels.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraWeaponInstance)
 
@@ -132,8 +134,62 @@ void ULyraWeaponInstance::RemoveDeviceProperties()
 	}
 }
 
+
 void ULyraWeaponInstance::OnDeathStarted(AActor* OwningActor)
 {
 	// Remove any possibly active device properties when we die to make sure that there aren't any lingering around
 	RemoveDeviceProperties();
+}
+
+
+//--------------------(추가)------------------
+FTransform ULyraWeaponInstance::GetMuzzleTransform() const
+{
+	// 1. 주 장비 액터에서 소켓 찾기
+	if (AActor* PrimaryActor = GetPrimaryActor())
+	{
+		if (USkeletalMeshComponent* WeaponMesh = PrimaryActor->FindComponentByClass<USkeletalMeshComponent>())
+		{
+			// 커스텀 소켓 우선
+			if (WeaponMesh->DoesSocketExist(MuzzleSocketName))
+			{
+				return WeaponMesh->GetSocketTransform(MuzzleSocketName, RTS_World);
+			}
+			// 기본 Muzzle 소켓
+			if (WeaponMesh->DoesSocketExist(TEXT("Muzzle")))
+			{
+				return WeaponMesh->GetSocketTransform(TEXT("Muzzle"), RTS_World);
+			}
+		}
+	}
+
+	// 2. 캐릭터 소켓 사용 (fallback)
+	if (APawn* OwnerPawn = GetPawn())
+	{
+		if (ALyraCharacter* LyraChar = Cast<ALyraCharacter>(OwnerPawn))
+		{
+			if (USkeletalMeshComponent* CharMesh = LyraChar->GetMesh())
+			{
+				if (CharMesh->DoesSocketExist(TEXT("weapon_r")))
+				{
+					return CharMesh->GetSocketTransform(TEXT("weapon_r"), RTS_World);
+				}
+				if (CharMesh->DoesSocketExist(MuzzleSocketName))
+				{
+					return CharMesh->GetSocketTransform(MuzzleSocketName, RTS_World);
+				}
+			}
+
+			// 소켓이 없으면 캐릭터 앞쪽으로 오프셋
+			FTransform CharTransform = LyraChar->GetActorTransform();
+			FVector ForwardOffset = CharTransform.GetRotation().GetForwardVector() * 100.0f; // 1미터 앞
+			FVector UpOffset = CharTransform.GetRotation().GetUpVector() * 150.0f; // 가슴 높이
+			CharTransform.SetLocation(CharTransform.GetLocation() + ForwardOffset + UpOffset);
+			return CharTransform;
+		}
+	}
+
+	// 3. 정말 마지막 fallback (Identity는 위험!)
+	UE_LOG(LogTemp, Error, TEXT("GetMuzzleTransform failed for weapon %s - using Identity!"), *GetPathNameSafe(this));
+	return FTransform::Identity;
 }
