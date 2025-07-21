@@ -31,7 +31,7 @@ bool UHaroGameplayAbility_ProjectileWeapon::CanActivateAbility(const FGameplayAb
 	{
 		if (GetWeaponInstance() == nullptr)
 		{
-			UE_LOG(LogLyraAbilitySystem, Error, TEXT("Weapon ability %s cannot be activated because there is no associated ranged weapon (equipment instance=%s but needs to be derived from %s)"),
+			UE_LOG(LogLyraAbilitySystem, Error, TEXT("Weapon ability %s cannot be activated because there is no associated projectile weapon (equipment instance=%s but needs to be derived from %s)"),
 				*GetPathName(),
 				*GetPathNameSafe(GetAssociatedEquipment()),
 				*UHaroProjectileWeaponInstance::StaticClass()->GetName());
@@ -177,16 +177,38 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 	}
 }
 
+// TODO
 // 투사체 스폰 후 호출되는 함수 (추가 설정용)
 void UHaroGameplayAbility_ProjectileWeapon::OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile)
 {
 	// 여기서 투사체에 추가 설정 적용 가능
 	// 예: 속도 조정 등
 
+	UHaroProjectileWeaponInstance* WeaponInstance = GetWeaponInstance();
+	if (!WeaponInstance || !SpawnedProjectile)
+		return;
+
+	// 이런 식으로 하지말고 나중에 최적화 방식으로 변경하자
+	/*float BaseSpeed = WeaponInstance->GetProjectileSpeed();
+	SpawnedProjectile->SetSpeed(BaseSpeed);*/
+
+	// (최적화)
+	// 아래와 같이 해서 (호출 최소화, Instance에서 Projectile 관련 설정 하도록)
+	WeaponInstance->ConfigureProjectile(SpawnedProjectile);
+	// 계산 로직도 Instance에서 하도록!
+
 	// 데미지는 적중 시점에 계산이 되어야 한다고 함
-	// 거리 감쇠, 재질 배율 등
+	// 거리 감쇠, 재질 배율 등 -> 이런 처리는 부딪혔을 때 하는 것으로
+	// -> 단, 버프는 스폰 시점의 버프만 적용되어야 하므로 여기서 BaseDamage를 보내줘야 할 가능성이 높음
 
 	// 블루프린트에서 오버라이드할 수 있도록 이벤트 호출
+
+	// 투사체 속도나 기본 데미지 같은 것은 유연성을 위해 블루프린트에서 하는 게 맞을 것 같기도?
+
+	// EffectSpec을 통해 현재 버프된 상황을 가져오자 (버프 관련 다룰 때 다룰 예정)
+	// -> 근데 모든 무기가 다 BaseDamage 관련해서 쓰고 있어서
+	// 이에 대한 연구가 좀 더 필요해 보임.
+
 	OnProjectileSpawnedBP(SpawnedProjectile);
 }
 

@@ -25,12 +25,15 @@ class LYRAGAME_API AHaroProjectileBase : public AActor
 public:	
 	AHaroProjectileBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UFUNCTION(BlueprintCallable)
+	void SetSpeed(float Speed);
+
+	UFUNCTION(BlueprintCallable)
+	void SetGravityScale(float NewGravityScale);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
-
-	UFUNCTION(BlueprintCallable)
-	void SetSpeed(float Speed);
 
 private:
 	UFUNCTION()

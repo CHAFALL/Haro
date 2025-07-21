@@ -7,6 +7,7 @@
 #include "Camera/LyraCameraComponent.h"
 #include "Physics/PhysicalMaterialWithTags.h"
 #include "Weapons/LyraWeaponInstance.h"
+#include "Weapons/HaroProjectileBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroProjectileWeaponInstance)
 
@@ -45,6 +46,14 @@ void UHaroProjectileWeaponInstance::UpdateDebugVisualization()
 }
 #endif
 
+void UHaroProjectileWeaponInstance::ConfigureProjectile(AHaroProjectileBase* Projectile) const
+{
+	if (!Projectile) return;
+
+	Projectile->SetSpeed(ProjectileSpeed);
+	Projectile->SetLifeSpan(ProjectileLifespan);
+	Projectile->SetGravityScale(ProjectileGravityScale);
+}
 
 void UHaroProjectileWeaponInstance::OnEquipped()
 {

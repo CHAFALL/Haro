@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Curves/CurveFloat.h"
+
 #include "LyraWeaponInstance.h"
 #include "AbilitySystem/LyraAbilitySourceInterface.h"
 
@@ -41,7 +42,10 @@ public:
 	float GetSpreadExponent() const { return SpreadExponent; }
 	float GetProjectileSpeed() const { return ProjectileSpeed; }
 	float GetProjectileGravityScale() const { return ProjectileGravityScale; }
-	TSubclassOf<AHaroProjectileBase> GetProjectileClass() const { return ProjectileClass; } // 고민 중.
+
+	// 투사체 설정 함수 (호출을 최소화하기 위함)
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	virtual void ConfigureProjectile(AHaroProjectileBase* Projectile) const;
 
 protected:
 #if WITH_EDITORONLY_DATA
@@ -146,13 +150,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile Config")
 	int32 ProjectilesPerCartridge = 1;
 
-	// 투사체 클래스
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile Config")
-	TSubclassOf<AHaroProjectileBase> ProjectileClass;
-
 	// 투사체 초기 속도
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile Config", meta = (ForceUnits = "cm/s"))
-	float ProjectileSpeed = 10000.0f;
+	float ProjectileSpeed = 1000.0f;
 
 	// 투사체 중력 스케일 (0.0이면 중력 없음, 1.0이면 기본 중력)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile Config")

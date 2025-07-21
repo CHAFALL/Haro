@@ -6,6 +6,7 @@
 #include "HaroGameplayAbility_ProjectileWeapon.generated.h"
 
 class AHaroProjectileBase;
+class UHaroProjectileWeaponInstance;
 
 /**
  * 
@@ -37,7 +38,8 @@ protected:
 	// 서버 검증 함수 (치팅 방지)
 	bool IsValidLaunchTransform(const FTransform& LaunchTransform, APawn* SourcePawn);
 
-	void OnTargetDataReadyCallback(const FGameplayAbilityTargetDataHandle& InData, FGameplayTag ApplicationTag);
+	void OnTargetDataReadyCallback(const FGameplayAbilityTargetDataHandle& InData, FGameplayTag ApplicationTag);  
+	
 
 	UFUNCTION(BlueprintCallable)
 	void StartProjectileTargeting();
@@ -62,7 +64,7 @@ protected:
 	EHaroAbilityTargetingSource TargetingSource = EHaroAbilityTargetingSource::CameraTowardsFocus;
 
 	
-private:
+protected:
 	FDelegateHandle OnTargetDataReadyCallbackDelegateHandle;
 };
 

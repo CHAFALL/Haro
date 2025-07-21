@@ -22,7 +22,7 @@ AHaroProjectileBase::AHaroProjectileBase(const FObjectInitializer& ObjectInitial
 	bNetLoadOnClient = false;
 	bReplicates = true;	// 엑터 자체를 네트워크로 복제
 
-	AActor::SetLifeSpan(5.f);
+	//AActor::SetLifeSpan(5.f);
 
 	SphereCollisionComponent = CreateDefaultSubobject<USphereComponent>("SphereCollisionComponent");
 	SetRootComponent(SphereCollisionComponent);
@@ -75,6 +75,11 @@ void AHaroProjectileBase::Destroyed()
 void AHaroProjectileBase::SetSpeed(float Speed)
 {
 	ProjectileMovementComponent->Velocity = ProjectileMovementComponent->Velocity.GetSafeNormal() * Speed;
+}
+
+void AHaroProjectileBase::SetGravityScale(float NewGravityScale)
+{
+	ProjectileMovementComponent->ProjectileGravityScale = NewGravityScale;
 }
 
 void AHaroProjectileBase::HandleComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& HitResult)
