@@ -32,8 +32,11 @@ protected:
 	void SpawnProjectile();
 	void SpawnProjectileFromTargetData(const FGameplayAbilityTargetDataHandle& TargetData);
 
+	// 투사체 스폰 전에 설정을 위한 함수
+	virtual void ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
+
 	// 투사체 스폰 후 호출되는 네이티브 함수
-	virtual void OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile);
+	virtual void OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance);
 
 	// 서버 검증 함수 (치팅 방지)
 	bool IsValidLaunchTransform(const FTransform& LaunchTransform, APawn* SourcePawn);
@@ -53,7 +56,7 @@ protected:
 	void OnProjectileTargetDataReady(const FGameplayAbilityTargetDataHandle& TargetData);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
-	void OnProjectileSpawnedBP(AHaroProjectileBase* SpawnedProjectile);
+	void OnProjectileSpawnedBP(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")

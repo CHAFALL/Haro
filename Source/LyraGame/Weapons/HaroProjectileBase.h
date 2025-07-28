@@ -51,7 +51,7 @@ private:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<USphereComponent> SphereCollisionComponent;
+	TObjectPtr<USphereComponent> SphereCollisionComponent; // 이거 좀 더 다양하게 가능하도록 수정하는 것도 나쁘지 않을 듯.
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> ProjectileMeshComponent;

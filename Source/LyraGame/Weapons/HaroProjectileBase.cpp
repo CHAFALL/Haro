@@ -3,6 +3,7 @@
 
 #include "HaroProjectileBase.h"
 #include "Components/SphereComponent.h"
+#include "Physics/LyraCollisionChannels.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "System/LyraAssetManager.h"
 #include "System/LyraGameData.h"
@@ -27,6 +28,7 @@ AHaroProjectileBase::AHaroProjectileBase(const FObjectInitializer& ObjectInitial
 	SphereCollisionComponent = CreateDefaultSubobject<USphereComponent>("SphereCollisionComponent");
 	SetRootComponent(SphereCollisionComponent);
 	SphereCollisionComponent->SetCollisionProfileName("Projectile");
+	SphereCollisionComponent->SetCollisionObjectType(Haro_ObjectChannel_Projectile);
 	SphereCollisionComponent->bReturnMaterialOnMove = true;	// 이동 시 물리 재질 정보 반환
 	SphereCollisionComponent->SetCanEverAffectNavigation(false); // 네비게이션 영향 x
 

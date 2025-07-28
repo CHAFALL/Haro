@@ -22,3 +22,6 @@
 
 // Allocated to aim assist by the ShooterCore game feature
 // ECC_GameTraceChannel5
+
+// (추가)
+#define Haro_ObjectChannel_Projectile					ECC_GameTraceChannel6

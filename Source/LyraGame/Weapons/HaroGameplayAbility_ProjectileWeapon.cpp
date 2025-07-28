@@ -159,11 +159,23 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 				SpawnParams.Owner = WeaponActor ? WeaponActor : LyraCharacter;
 				SpawnParams.Instigator = LyraCharacter;
 
-				// 실제 투사체 스폰 (클라이언트가 보낸 정보 사용!)
-				if (AHaroProjectileBase* SpawnedProjectile = GetWorld()->SpawnActor<AHaroProjectileBase>(ProjectileClass, LaunchTransform, SpawnParams))
+				// SpawnActorDeferred써서 속성을 설정한 후에 스폰하는 식으로 변경
+				if (AHaroProjectileBase* SpawnedProjectile = GetWorld()->SpawnActorDeferred<AHaroProjectileBase>(
+					ProjectileClass,
+					LaunchTransform,
+					SpawnParams.Owner,
+					SpawnParams.Instigator,
+					SpawnParams.SpawnCollisionHandlingOverride))
 				{
-					// 투사체 초기화
-					OnProjectileSpawned(SpawnedProjectile);
+
+					// 스폰 전 설정.
+					ConfigureProjectilePreSpawn(SpawnedProjectile, ProjectileWeaponInstance, LyraCharacter);
+
+					// 실제 스폰 완료 (이때 BeginPlay 호출됨)
+					SpawnedProjectile->FinishSpawning(LaunchTransform);
+
+					// 스폰 완료 후 추가 로직
+					OnProjectileSpawned(SpawnedProjectile, ProjectileWeaponInstance);
 
 					UE_LOG(LogTemp, Log, TEXT("Projectile spawned at: %s"), *LaunchTransform.GetLocation().ToString());
 				}
@@ -177,39 +189,26 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 	}
 }
 
+void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+{
+	if (!Projectile || !WeaponInstance || !SourceCharacter)
+		return;
+
+	WeaponInstance->ConfigureProjectile(Projectile);
+
+	// 데미지 관련도 Instance에서?? 아니면 GE에서 바로?
+}
+
 // TODO
 // 투사체 스폰 후 호출되는 함수 (추가 설정용)
-void UHaroGameplayAbility_ProjectileWeapon::OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile)
+void UHaroGameplayAbility_ProjectileWeapon::OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance)
 {
-	// 여기서 투사체에 추가 설정 적용 가능
-	// 예: 속도 조정 등
+	// 이펙트 관련
 
-	UHaroProjectileWeaponInstance* WeaponInstance = GetWeaponInstance();
 	if (!WeaponInstance || !SpawnedProjectile)
 		return;
 
-	// 이런 식으로 하지말고 나중에 최적화 방식으로 변경하자
-	/*float BaseSpeed = WeaponInstance->GetProjectileSpeed();
-	SpawnedProjectile->SetSpeed(BaseSpeed);*/
-
-	// (최적화)
-	// 아래와 같이 해서 (호출 최소화, Instance에서 Projectile 관련 설정 하도록)
-	WeaponInstance->ConfigureProjectile(SpawnedProjectile);
-	// 계산 로직도 Instance에서 하도록!
-
-	// 데미지는 적중 시점에 계산이 되어야 한다고 함
-	// 거리 감쇠, 재질 배율 등 -> 이런 처리는 부딪혔을 때 하는 것으로
-	// -> 단, 버프는 스폰 시점의 버프만 적용되어야 하므로 여기서 BaseDamage를 보내줘야 할 가능성이 높음
-
-	// 블루프린트에서 오버라이드할 수 있도록 이벤트 호출
-
-	// 투사체 속도나 기본 데미지 같은 것은 유연성을 위해 블루프린트에서 하는 게 맞을 것 같기도?
-
-	// EffectSpec을 통해 현재 버프된 상황을 가져오자 (버프 관련 다룰 때 다룰 예정)
-	// -> 근데 모든 무기가 다 BaseDamage 관련해서 쓰고 있어서
-	// 이에 대한 연구가 좀 더 필요해 보임.
-
-	OnProjectileSpawnedBP(SpawnedProjectile);
+	OnProjectileSpawnedBP(SpawnedProjectile, WeaponInstance);
 }
 
 bool UHaroGameplayAbility_ProjectileWeapon::IsValidLaunchTransform(const FTransform& LaunchTransform, APawn* SourcePawn)
