@@ -3,9 +3,9 @@
 #pragma once
 
 #include "GameplayTagContainer.h"
+#include "GameplayEffectTypes.h" 
 #include "HaroProjectileBase.generated.h"
 
-class UGameplayEffect;
 class USphereComponent;
 class UProjectileMovementComponent;
 
@@ -30,6 +30,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetGravityScale(float NewGravityScale);
+
+	UFUNCTION(BlueprintPure)
+	FGameplayEffectSpecHandle GetDamageEffectSpec() const { return DamageEffectSpecHandle; }
+
+	// 데미지 이펙트 스펙 설정 (어빌리티에서 호출)
+	UFUNCTION(BlueprintCallable)
+	void SetDamageEffectSpec(const FGameplayEffectSpecHandle& InDamageSpec);
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,9 +66,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float Damage = 0.f;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "GameplayCue"))
 	FGameplayTag HitGameplayCueTag;
 
@@ -71,10 +75,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	ECollisionDetectionType CollisionDetectionType = ECollisionDetectionType::None;
 
+	virtual void ApplyDamageToTarget(AActor* TargetActor, const FHitResult& HitResult);
+
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UActorComponent> AttachingComponent;
 
 	UPROPERTY()
 	TSet<TWeakObjectPtr<AActor>> HitActors;
+
+	// 데미지 이펙트 스펙 (어빌리티에서 설정)
+	FGameplayEffectSpecHandle DamageEffectSpecHandle;
 };
+
+
+

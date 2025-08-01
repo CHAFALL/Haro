@@ -35,6 +35,8 @@ protected:
 	// 투사체 스폰 전에 설정을 위한 함수
 	virtual void ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
 
+	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
+
 	// 투사체 스폰 후 호출되는 네이티브 함수
 	virtual void OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance);
 
@@ -66,7 +68,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Targeting")
 	EHaroAbilityTargetingSource TargetingSource = EHaroAbilityTargetingSource::CameraTowardsFocus;
 
-	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 protected:
 	FDelegateHandle OnTargetDataReadyCallbackDelegateHandle;
 };

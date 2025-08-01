@@ -28,7 +28,6 @@ AHaroProjectileBase::AHaroProjectileBase(const FObjectInitializer& ObjectInitial
 	SphereCollisionComponent = CreateDefaultSubobject<USphereComponent>("SphereCollisionComponent");
 	SetRootComponent(SphereCollisionComponent);
 	SphereCollisionComponent->SetCollisionProfileName("Projectile");
-	SphereCollisionComponent->SetCollisionObjectType(Haro_ObjectChannel_Projectile);
 	SphereCollisionComponent->bReturnMaterialOnMove = true;	// 이동 시 물리 재질 정보 반환
 	SphereCollisionComponent->SetCanEverAffectNavigation(false); // 네비게이션 영향 x
 
@@ -47,7 +46,7 @@ void AHaroProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	SphereCollisionComponent->IgnoreActorWhenMoving(GetInstigator(), true);
+	SphereCollisionComponent->IgnoreActorWhenMoving(GetInstigator(), true); 
 
 	switch (CollisionDetectionType)
 	{
@@ -84,8 +83,20 @@ void AHaroProjectileBase::SetGravityScale(float NewGravityScale)
 	ProjectileMovementComponent->ProjectileGravityScale = NewGravityScale;
 }
 
+void AHaroProjectileBase::SetDamageEffectSpec(const FGameplayEffectSpecHandle& InDamageSpec)
+{
+	DamageEffectSpecHandle = InDamageSpec;
+}
+
 void AHaroProjectileBase::HandleComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& HitResult)
 {
+
+	// 자기 자신과의 충돌은 무시
+	if (OtherActor == GetInstigator())
+	{
+		return; 
+	}
+
 	if (HitActors.Num() > 0)
 		return;
 
@@ -114,6 +125,13 @@ void AHaroProjectileBase::HandleComponentHit(UPrimitiveComponent* HitComponent, 
 
 void AHaroProjectileBase::HandleComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+
+	// 자기 자신과의 충돌은 무시
+	if (OtherActor == GetInstigator())
+	{
+		return;
+	}
+
 	// 왜 얘는 Contains로? (ex. 적의 머리, 몸통, 다리 다 맞았다고 하면 폭딜 들어감.)
 	if (HitActors.Contains(OtherActor))
 		return;
@@ -145,7 +163,7 @@ void AHaroProjectileBase::HandleCollisionDetection(AActor* OtherActor, UPrimitiv
 		UAbilitySystemComponent* SourceASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetInstigator());
 
 
-		// 시각적 효과 실행
+		// 시각적 효과 실행 - 여기도 나중에 블루프린트로 뺄 것임.
 		if (SourceASC && HitGameplayCueTag.IsValid() && HitResult.bBlockingHit)
 		{
 			FGameplayCueParameters SourceCueParams;
@@ -156,24 +174,51 @@ void AHaroProjectileBase::HandleCollisionDetection(AActor* OtherActor, UPrimitiv
 		}
 
 		// 데미지 적용 (아직 Ability와 연동 안됨.)
-		if (TargetASC && GetOwner() != OtherActor && GetOwner() != OtherComponent->GetOwner() && GetInstigator() != OtherActor)
-		{
-			// Lyra의 데미지 GameplayEffect 가져오기
-			const TSubclassOf<UGameplayEffect> DamageGEClass = ULyraAssetManager::GetSubclass(ULyraGameData::Get().DamageGameplayEffect_SetByCaller);
+		//if (TargetASC && GetOwner() != OtherActor && GetOwner() != OtherComponent->GetOwner() && GetInstigator() != OtherActor)
+		//{
+		//	// Lyra의 데미지 GameplayEffect 가져오기
+		//	const TSubclassOf<UGameplayEffect> DamageGEClass = ULyraAssetManager::GetSubclass(ULyraGameData::Get().DamageGameplayEffect_SetByCaller);
 
-			// GameplayEffect Context 생성
-			FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
-			EffectContextHandle.AddHitResult(HitResult);
-			EffectContextHandle.AddInstigator(SourceASC->AbilityActorInfo->OwnerActor.Get(), this);
+		//	// GameplayEffect Context 생성
+		//	FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+		//	EffectContextHandle.AddHitResult(HitResult);
+		//	EffectContextHandle.AddInstigator(SourceASC->AbilityActorInfo->OwnerActor.Get(), this);
 
-			// GameplayEffect Spec 생성
-			FGameplayEffectSpecHandle EffectSpecHandle = SourceASC->MakeOutgoingSpec(DamageGEClass, 1.f, EffectContextHandle);
-			
-			// 데미지 양 설정
-			EffectSpecHandle.Data->SetSetByCallerMagnitude(LyraGameplayTags::SetByCaller_Damage, Damage);
-			TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
-		}
+		//	// GameplayEffect Spec 생성
+		//	FGameplayEffectSpecHandle EffectSpecHandle = SourceASC->MakeOutgoingSpec(DamageGEClass, 1.f, EffectContextHandle);
+		//	
+		//	// 데미지 양 설정
+		//	EffectSpecHandle.Data->SetSetByCallerMagnitude(LyraGameplayTags::SetByCaller_Damage, Damage);
+		//	TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+		//}
+
+		// 데미지 적용.
+		ApplyDamageToTarget(OtherActor, HitResult);
 	}
+}
+
+// 스냅샷을 true로 해뒀기 때문에 스폰 시점 기준으로 스텟이 적용이 됨.
+void AHaroProjectileBase::ApplyDamageToTarget(AActor* TargetActor, const FHitResult& HitResult)
+{
+	// DamageEffectSpecHandle이 유효한지 확인
+	if (!DamageEffectSpecHandle.IsValid()) return;
+
+	FGameplayEffectContext* Context = DamageEffectSpecHandle.Data->GetContext().Get();
+	if (Context)
+	{
+		Context->AddHitResult(HitResult);  // 충돌 정보 추가
+		// AddInstigator도 해줘야 할까? // 내가 알기로는 MakeEffectContext할때 함수 안에 AddInstigator도 같이 있는 것으로 암.
+		// AddInstigator(instigator, effectCauser) 여서 effectCauser를 this로 하면 투사체로 설정이 되어 데미지가 들어왔던 것임.
+	}
+
+	// 타겟의 AbilitySystemComponent 찾기
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetActor);
+	if (!TargetASC) return;
+
+	// GameplayEffect 적용
+	FActiveGameplayEffectHandle EffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(
+		*DamageEffectSpecHandle.Data.Get()
+	);
 }
 
 

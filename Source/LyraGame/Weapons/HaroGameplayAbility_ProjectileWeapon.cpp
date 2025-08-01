@@ -194,9 +194,40 @@ void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectilePreSpawn(AHaroPro
 	if (!Projectile || !WeaponInstance || !SourceCharacter)
 		return;
 
-	WeaponInstance->ConfigureProjectile(Projectile);
+	WeaponInstance->ConfigureProjectile(Projectile); // GE를 제외한 모든 투사체 설정
 
-	// 데미지 관련도 Instance에서?? 아니면 GE에서 바로?
+	ConfigureProjectileDamageEffect(Projectile, WeaponInstance, SourceCharacter);
+}
+
+void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+{
+	// 데미지 이펙트 스펙 생성 및 설정
+	UAbilitySystemComponent* SourceASC = SourceCharacter->GetAbilitySystemComponent();
+	if (SourceASC && DamageEffectClass)
+	{
+		// 현재 어빌리티 컨텍스트로 데미지 GE 스펙 생성
+		// 필요시 더 많은 정보를 추가해도 됨.
+		// 이 함수 내부에서 이미 다음과 같은 정보들이 설정됨:
+		// - Instigator (발사자)
+		// - EffectCauser 
+		// - SourceObject (ASC의 소유자)
+		FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+		EffectContext.SetAbility(this);
+		EffectContext.AddSourceObject(WeaponInstance);
+
+		// 데미지 이펙트 스펙 생성
+		FGameplayEffectSpecHandle DamageSpec = SourceASC->MakeOutgoingSpec(
+			DamageEffectClass,
+			GetAbilityLevel(),
+			EffectContext
+		);
+
+		if (DamageSpec.IsValid())
+		{
+			// 투사체에 데미지 스펙 설정
+			Projectile->SetDamageEffectSpec(DamageSpec);
+		}
+	}
 }
 
 // TODO

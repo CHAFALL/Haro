@@ -15,7 +15,7 @@ UHaroChargingProjectileWeaponInstance::UHaroChargingProjectileWeaponInstance(con
 	TimeToDamageCurve.EditorCurveData.AddKey(MaxChargingTime, DamageMultiplier * 3.0f);
 
 	TimeToSizeCurve.EditorCurveData.AddKey(0.0f, SizeMultiplier);
-	TimeToSizeCurve.EditorCurveData.AddKey(MaxChargingTime, SizeMultiplier * 1.5f);
+	TimeToSizeCurve.EditorCurveData.AddKey(MaxChargingTime, SizeMultiplier * 10.5f);
 }
 
 void UHaroChargingProjectileWeaponInstance::PostLoad()

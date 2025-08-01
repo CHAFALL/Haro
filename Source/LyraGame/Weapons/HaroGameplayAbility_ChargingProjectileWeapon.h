@@ -32,6 +32,8 @@ protected:
 	// 래퍼함수 -> C++에서 템플릿 함수(AddUObject)에 멤버 함수 포인터를 전달할 때, 해당 함수가 protected면 접근할 수 없다고 해서 래퍼함수를 통해 징검다리 만듬.
 	void OnChargingTargetDataReadyCallback(const FGameplayAbilityTargetDataHandle& InData, FGameplayTag ApplicationTag);
 
+	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter) override;
+
 	/** 입력 해제 시 호출 (차징 완료 및 발사) */
 	UFUNCTION()
 	void OnInputRelease(float TimeHeld);

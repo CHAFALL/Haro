@@ -4,6 +4,9 @@
 #include "HaroGameplayAbility_ChargingProjectileWeapon.h"
 #include "HaroChargingProjectileWeaponInstance.h"
 #include "LyraLogChannels.h"
+#include "Character/LyraCharacter.h"
+#include "HaroProjectileBase.h"
+#include "LyraGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "AbilitySystemComponent.h"
 
@@ -91,6 +94,43 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::EndAbility(const FGameplayAb
 void UHaroGameplayAbility_ChargingProjectileWeapon::OnChargingTargetDataReadyCallback(const FGameplayAbilityTargetDataHandle& InData, FGameplayTag ApplicationTag)
 {
 	OnTargetDataReadyCallback(InData, ApplicationTag);
+}
+
+// 좀 더 보완이 가능할 것 같음.
+void UHaroGameplayAbility_ChargingProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+{
+	// Super 호출하지 않고 직접 처리
+	UAbilitySystemComponent* SourceASC = SourceCharacter->GetAbilitySystemComponent();
+	if (SourceASC && DamageEffectClass)
+	{
+		// 컨텍스트 생성
+		FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+		EffectContext.SetAbility(this);
+		EffectContext.AddSourceObject(WeaponInstance);
+
+		// 새로운 스펙 생성 -> 이때 스냅샷
+		FGameplayEffectSpecHandle DamageSpec = SourceASC->MakeOutgoingSpec(
+			DamageEffectClass,
+			GetAbilityLevel(),
+			EffectContext
+		);
+
+		if (DamageSpec.IsValid())
+		{
+			// 차징 배율을 바로 설정
+			if (UHaroChargingProjectileWeaponInstance* ChargingWeapon = GetChargingWeaponInstance())
+			{
+				float ChargeMultiplier = ChargingWeapon->GetChargedDamageMultiplier();
+				DamageSpec.Data->SetSetByCallerMagnitude(
+					LyraGameplayTags::SetByCaller_ChargeMultiplier,
+					ChargeMultiplier
+				);
+			}
+
+			// 투사체에 설정
+			Projectile->SetDamageEffectSpec(DamageSpec);
+		}
+	}
 }
 
 void UHaroGameplayAbility_ChargingProjectileWeapon::OnInputRelease(float TimeHeld)
