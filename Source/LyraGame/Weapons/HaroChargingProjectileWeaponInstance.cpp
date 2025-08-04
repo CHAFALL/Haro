@@ -86,7 +86,7 @@ void UHaroChargingProjectileWeaponInstance::ConfigureProjectile(AHaroProjectileB
 
 	// 투사체에 적용
 	Projectile->SetSpeed(ChargedSpeed);
-	Projectile->SetActorScale3D(FVector(ChargedSizeMultiplier));
+	Projectile->SetActorScale3D(FVector(ChargedSizeMultiplier)); // 콜리전도 같이 커짐.
 
 	// 데미지 처리는 현재 빠져있음.
 

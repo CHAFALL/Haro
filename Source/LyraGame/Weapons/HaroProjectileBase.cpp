@@ -23,8 +23,6 @@ AHaroProjectileBase::AHaroProjectileBase(const FObjectInitializer& ObjectInitial
 	bNetLoadOnClient = false;
 	bReplicates = true;	// 엑터 자체를 네트워크로 복제
 
-	//AActor::SetLifeSpan(5.f);
-
 	SphereCollisionComponent = CreateDefaultSubobject<USphereComponent>("SphereCollisionComponent");
 	SetRootComponent(SphereCollisionComponent);
 	SphereCollisionComponent->SetCollisionProfileName("Projectile");

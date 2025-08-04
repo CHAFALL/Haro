@@ -87,6 +87,3 @@ private:
 	// 데미지 이펙트 스펙 (어빌리티에서 설정)
 	FGameplayEffectSpecHandle DamageEffectSpecHandle;
 };
-
-
-
