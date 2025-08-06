@@ -6,7 +6,7 @@
 #include "HaroGameplayAbility_ProjectileWeapon.generated.h"
 
 class AHaroProjectileBase;
-class UHaroProjectileWeaponInstance;
+class UHaroRangedWeaponInstance;
 
 /**
  * 
@@ -19,9 +19,6 @@ class LYRAGAME_API UHaroGameplayAbility_ProjectileWeapon : public UHaroGameplayA
 public:
 	UHaroGameplayAbility_ProjectileWeapon(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	UFUNCTION(BlueprintCallable, Category = "Haro|Ability")
-	UHaroProjectileWeaponInstance* GetWeaponInstance() const;
-
 	//~UGameplayAbility interface
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
@@ -33,12 +30,12 @@ protected:
 	void SpawnProjectileFromTargetData(const FGameplayAbilityTargetDataHandle& TargetData);
 
 	// 투사체 스폰 전에 설정을 위한 함수
-	virtual void ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
+	virtual void ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
 
-	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
+	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
 
 	// 투사체 스폰 후 호출되는 네이티브 함수
-	virtual void OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance);
+	virtual void OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroRangedWeaponInstance* WeaponInstance);
 
 	// 서버 검증 함수 (치팅 방지)
 	bool IsValidLaunchTransform(const FTransform& LaunchTransform, APawn* SourcePawn);
@@ -58,7 +55,7 @@ protected:
 	void OnProjectileTargetDataReady(const FGameplayAbilityTargetDataHandle& TargetData);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
-	void OnProjectileSpawnedBP(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance);
+	void OnProjectileSpawnedBP(AHaroProjectileBase* SpawnedProjectile, UHaroRangedWeaponInstance* WeaponInstance);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")

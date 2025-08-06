@@ -7,6 +7,8 @@
 #include "HaroGameplayAbility_WeaponBase.generated.h"
 
 
+class UHaroRangedWeaponInstance;
+
 /** Defines where an ability starts its trace from and where it should face */
 UENUM(BlueprintType)
 enum class EHaroAbilityTargetingSource : uint8
@@ -36,6 +38,9 @@ class LYRAGAME_API UHaroGameplayAbility_WeaponBase : public ULyraGameplayAbility
 	
 public:
 	UHaroGameplayAbility_WeaponBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+	UFUNCTION(BlueprintCallable, Category = "Haro|Ability")
+	UHaroRangedWeaponInstance* GetWeaponInstance() const;
 
 	UFUNCTION(BlueprintPure, Category = "Fire Config")
 	EHaroFireInputType GetCurrentFireInputType() const { return FireInputType; }

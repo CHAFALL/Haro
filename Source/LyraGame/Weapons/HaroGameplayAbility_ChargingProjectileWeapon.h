@@ -5,7 +5,7 @@
 #include "HaroGameplayAbility_ProjectileWeapon.h"
 #include "HaroGameplayAbility_ChargingProjectileWeapon.generated.h"
 
-class UHaroChargingProjectileWeaponInstance;
+class UHaroRangedWeaponInstance;
 class UAbilityTask_WaitInputRelease;
 
 /**
@@ -19,9 +19,6 @@ class LYRAGAME_API UHaroGameplayAbility_ChargingProjectileWeapon : public UHaroG
 public:
 	UHaroGameplayAbility_ChargingProjectileWeapon(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	UFUNCTION(BlueprintCallable, Category = "Haro|Ability")
-	UHaroChargingProjectileWeaponInstance* GetChargingWeaponInstance() const;
-
 	//~UGameplayAbility interface
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
@@ -32,7 +29,7 @@ protected:
 	// 래퍼함수 -> C++에서 템플릿 함수(AddUObject)에 멤버 함수 포인터를 전달할 때, 해당 함수가 protected면 접근할 수 없다고 해서 래퍼함수를 통해 징검다리 만듬.
 	void OnChargingTargetDataReadyCallback(const FGameplayAbilityTargetDataHandle& InData, FGameplayTag ApplicationTag);
 
-	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter) override;
+	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter) override;
 
 	/** 입력 해제 시 호출 (차징 완료 및 발사) */
 	UFUNCTION()

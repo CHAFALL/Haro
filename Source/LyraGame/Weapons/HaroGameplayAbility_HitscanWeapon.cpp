@@ -48,11 +48,6 @@ UHaroGameplayAbility_HitscanWeapon::UHaroGameplayAbility_HitscanWeapon(const FOb
 	//SourceBlockedTags.AddTag(FGameplayTag::RequestGameplayTag("Ability.Weapon.NoFiring"));
 }
 
-UHaroRangedWeaponInstance* UHaroGameplayAbility_HitscanWeapon::GetWeaponInstance() const
-{
-	return Cast<UHaroRangedWeaponInstance>(GetAssociatedEquipment());
-}
-
 bool UHaroGameplayAbility_HitscanWeapon::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
 	bool bResult = Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);

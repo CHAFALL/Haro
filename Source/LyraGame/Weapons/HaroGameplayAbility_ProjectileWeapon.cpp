@@ -6,7 +6,7 @@
 #include "LyraLogChannels.h"
 #include "Character/LyraCharacter.h"
 #include "Player/LyraPlayerController.h"
-#include "HaroProjectileWeaponInstance.h"
+#include "HaroRangedWeaponInstance.h"
 #include "AbilitySystemComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroGameplayAbility_ProjectileWeapon)
@@ -16,11 +16,6 @@ UHaroGameplayAbility_ProjectileWeapon::UHaroGameplayAbility_ProjectileWeapon(con
 {
 	// Base에서 함.
 	//SourceBlockedTags.AddTag(FGameplayTag::RequestGameplayTag("Ability.Weapon.NoFiring"));
-}
-
-UHaroProjectileWeaponInstance* UHaroGameplayAbility_ProjectileWeapon::GetWeaponInstance() const
-{
-	return Cast<UHaroProjectileWeaponInstance>(GetAssociatedEquipment());
 }
 
 bool UHaroGameplayAbility_ProjectileWeapon::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
@@ -34,9 +29,10 @@ bool UHaroGameplayAbility_ProjectileWeapon::CanActivateAbility(const FGameplayAb
 			UE_LOG(LogLyraAbilitySystem, Error, TEXT("Weapon ability %s cannot be activated because there is no associated projectile weapon (equipment instance=%s but needs to be derived from %s)"),
 				*GetPathName(),
 				*GetPathNameSafe(GetAssociatedEquipment()),
-				*UHaroProjectileWeaponInstance::StaticClass()->GetName());
+				*UHaroRangedWeaponInstance::StaticClass()->GetName());
 			bResult = false;
 		}
+		// 현재 입력 타입에 대한 발사 모드가 투사체인지 확인하는 것도 나쁘지 않을듯?
 	}
 
 	return bResult;
@@ -91,7 +87,7 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectile()
 	if (HasAuthority(&CurrentActivationInfo) == false)
 		return;
 
-	UHaroProjectileWeaponInstance* ProjectileWeaponInstance = Cast<UHaroProjectileWeaponInstance>(GetWeaponInstance());
+	UHaroRangedWeaponInstance* WeaponInstance = Cast<UHaroRangedWeaponInstance>(GetWeaponInstance());
 
 	ALyraCharacter* LyraCharacter = GetLyraCharacterFromActorInfo();
 	ALyraPlayerController* LyraPlayerController = GetLyraPlayerControllerFromActorInfo();
@@ -100,7 +96,7 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectile()
 	{
 
 		// 무기의 소켓(머즐) 위치 가져오기 
-		FTransform MuzzleTransform = ProjectileWeaponInstance->GetMuzzleTransform();
+		FTransform MuzzleTransform = WeaponInstance->GetMuzzleTransform();
 
 		// 타겟팅 트랜스폼 가져오기 (Base 함수)
 		FTransform TargetingTransform = GetTargetingTransform(LyraCharacter, TargetingSource);
@@ -111,7 +107,7 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectile()
 		SpawnTransform.SetRotation(TargetingTransform.GetRotation());
 		
 		// 무기 인스턴스에서 직접 무기 액터 가져오기
-		AActor* WeaponActor = ProjectileWeaponInstance->GetPrimaryActor();
+		AActor* WeaponActor = WeaponInstance->GetPrimaryActor();
 		
 		// 스폰 파라미터 설정
 		FActorSpawnParameters SpawnParams;
@@ -132,10 +128,10 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 	if (!HasAuthority(&CurrentActivationInfo))
 		return;
 
-	UHaroProjectileWeaponInstance* ProjectileWeaponInstance = Cast<UHaroProjectileWeaponInstance>(GetWeaponInstance());
+	UHaroRangedWeaponInstance* WeaponInstance = Cast<UHaroRangedWeaponInstance>(GetWeaponInstance());
 	ALyraCharacter* LyraCharacter = GetLyraCharacterFromActorInfo();
 
-	if (!LyraCharacter || !ProjectileWeaponInstance || !ProjectileClass)
+	if (!LyraCharacter || !WeaponInstance || !ProjectileClass)
 		return;
 
 	// 타겟 데이터에서 발사 정보 추출
@@ -151,7 +147,7 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 			if (IsValidLaunchTransform(LaunchTransform, LyraCharacter))
 			{
 				// 무기 액터 가져오기
-				AActor* WeaponActor = ProjectileWeaponInstance->GetPrimaryActor();
+				AActor* WeaponActor = WeaponInstance->GetPrimaryActor();
 
 				// 스폰 파라미터 설정
 				FActorSpawnParameters SpawnParams;
@@ -169,13 +165,13 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 				{
 
 					// 스폰 전 설정.
-					ConfigureProjectilePreSpawn(SpawnedProjectile, ProjectileWeaponInstance, LyraCharacter);
+					ConfigureProjectilePreSpawn(SpawnedProjectile, WeaponInstance, LyraCharacter);
 
 					// 실제 스폰 완료 (이때 BeginPlay 호출됨)
 					SpawnedProjectile->FinishSpawning(LaunchTransform);
 
 					// 스폰 완료 후 추가 로직
-					OnProjectileSpawned(SpawnedProjectile, ProjectileWeaponInstance);
+					OnProjectileSpawned(SpawnedProjectile, WeaponInstance);
 
 					UE_LOG(LogTemp, Log, TEXT("Projectile spawned at: %s"), *LaunchTransform.GetLocation().ToString());
 				}
@@ -189,17 +185,19 @@ void UHaroGameplayAbility_ProjectileWeapon::SpawnProjectileFromTargetData(const 
 	}
 }
 
-void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectilePreSpawn(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
 {
 	if (!Projectile || !WeaponInstance || !SourceCharacter)
 		return;
 
-	WeaponInstance->ConfigureProjectile(Projectile); // GE를 제외한 모든 투사체 설정
+	const EHaroFireInputType InputType = GetCurrentFireInputType();
+
+	WeaponInstance->ConfigureProjectileForInput(Projectile, InputType); // GE를 제외한 모든 투사체 설정
 
 	ConfigureProjectileDamageEffect(Projectile, WeaponInstance, SourceCharacter);
 }
 
-void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
 {
 	// 데미지 이펙트 스펙 생성 및 설정
 	UAbilitySystemComponent* SourceASC = SourceCharacter->GetAbilitySystemComponent();
@@ -232,12 +230,15 @@ void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileDamageEffect(AHar
 
 // TODO
 // 투사체 스폰 후 호출되는 함수 (추가 설정용)
-void UHaroGameplayAbility_ProjectileWeapon::OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroProjectileWeaponInstance* WeaponInstance)
+void UHaroGameplayAbility_ProjectileWeapon::OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroRangedWeaponInstance* WeaponInstance)
 {
 	// 이펙트 관련
 
 	if (!WeaponInstance || !SpawnedProjectile)
 		return;
+
+	// 추가: 확산 시스템에 발사 추가
+	WeaponInstance->AddSpread();
 
 	OnProjectileSpawnedBP(SpawnedProjectile, WeaponInstance);
 }
@@ -384,15 +385,15 @@ bool UHaroGameplayAbility_ProjectileWeapon::CalculateProjectileLaunchTransform(A
 	if (!SourcePawn)
 		return false;
 
-	UHaroProjectileWeaponInstance* ProjectileWeaponInstance = Cast<UHaroProjectileWeaponInstance>(GetWeaponInstance());
-	if (!ProjectileWeaponInstance)
+	UHaroRangedWeaponInstance* WeaponInstance = Cast<UHaroRangedWeaponInstance>(GetWeaponInstance());
+	if (!WeaponInstance)
 		return false;
 
 	// GetTargetingTransform을 사용해서 타겟팅 트랜스폼 계산
 	FTransform TargetingTransform = GetTargetingTransform(SourcePawn, TargetingSource);
 
 	// 무기의 머즐 위치 가져오기
-	FTransform MuzzleTransform = ProjectileWeaponInstance->GetMuzzleTransform();
+	FTransform MuzzleTransform = WeaponInstance->GetMuzzleTransform();
 
 	// 발사 트랜스폼 설정
 	OutLaunchTransform.SetLocation(MuzzleTransform.GetLocation());

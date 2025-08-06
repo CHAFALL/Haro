@@ -2,7 +2,7 @@
 
 
 #include "HaroGameplayAbility_WeaponBase.h"
-#include "Weapons/LyraWeaponInstance.h"
+#include "Weapons/HaroRangedWeaponInstance.h"
 #include "AIController.h"
 //#include "NativeGameplayTags.h"
 
@@ -20,6 +20,10 @@ UHaroGameplayAbility_WeaponBase::UHaroGameplayAbility_WeaponBase(const FObjectIn
 	SourceBlockedTags.AddTag(FGameplayTag::RequestGameplayTag("Ability.Weapon.NoFiring"));
 }
 
+UHaroRangedWeaponInstance* UHaroGameplayAbility_WeaponBase::GetWeaponInstance() const
+{
+    return Cast<UHaroRangedWeaponInstance>(GetAssociatedEquipment());
+}
 
 FVector UHaroGameplayAbility_WeaponBase::GetWeaponTargetingSourceLocation() const
 {

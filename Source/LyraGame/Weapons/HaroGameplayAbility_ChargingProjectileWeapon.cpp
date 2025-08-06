@@ -2,7 +2,7 @@
 
 
 #include "HaroGameplayAbility_ChargingProjectileWeapon.h"
-#include "HaroChargingProjectileWeaponInstance.h"
+#include "HaroRangedWeaponInstance.h"
 #include "LyraLogChannels.h"
 #include "Character/LyraCharacter.h"
 #include "HaroProjectileBase.h"
@@ -16,11 +16,6 @@ UHaroGameplayAbility_ChargingProjectileWeapon::UHaroGameplayAbility_ChargingProj
 	: Super(ObjectInitializer)
 {
 	// 태그 넣는 곳.
-}
-
-UHaroChargingProjectileWeaponInstance* UHaroGameplayAbility_ChargingProjectileWeapon::GetChargingWeaponInstance() const
-{
-	return Cast<UHaroChargingProjectileWeaponInstance>(GetAssociatedEquipment());
 }
 
 void UHaroGameplayAbility_ChargingProjectileWeapon::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -45,7 +40,7 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::ActivateAbility(const FGamep
 	).AddUObject(this, &ThisClass::OnChargingTargetDataReadyCallback);
 
 	// 2. 무기 발사 시간 업데이트
-	if (UHaroChargingProjectileWeaponInstance* WeaponData = GetChargingWeaponInstance())
+	if (UHaroRangedWeaponInstance* WeaponData = GetWeaponInstance())
 	{
 		WeaponData->UpdateFiringTime();
 	}
@@ -82,7 +77,7 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::EndAbility(const FGameplayAb
 	}
 
 	// WeaponInstance 차징 시간 초기화
-	if (UHaroChargingProjectileWeaponInstance* WeaponInstance = GetChargingWeaponInstance())
+	if (UHaroRangedWeaponInstance* WeaponInstance = GetWeaponInstance())
 	{
 		WeaponInstance->UpdateChargingTime(0.0f);
 	}
@@ -97,7 +92,7 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::OnChargingTargetDataReadyCal
 }
 
 // 좀 더 보완이 가능할 것 같음.
-void UHaroGameplayAbility_ChargingProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroProjectileWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+void UHaroGameplayAbility_ChargingProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
 {
 	// Super 호출하지 않고 직접 처리
 	UAbilitySystemComponent* SourceASC = SourceCharacter->GetAbilitySystemComponent();
@@ -118,9 +113,11 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::ConfigureProjectileDamageEff
 		if (DamageSpec.IsValid())
 		{
 			// 차징 배율을 바로 설정
-			if (UHaroChargingProjectileWeaponInstance* ChargingWeapon = GetChargingWeaponInstance())
+			if (UHaroRangedWeaponInstance* WeaponData = GetWeaponInstance())
 			{
-				float ChargeMultiplier = ChargingWeapon->GetChargedDamageMultiplier();
+				const EHaroFireInputType InputType = GetCurrentFireInputType();
+
+				float ChargeMultiplier = WeaponData->GetChargedDamageMultiplier(InputType);
 				DamageSpec.Data->SetSetByCallerMagnitude(
 					LyraGameplayTags::SetByCaller_ChargeMultiplier,
 					ChargeMultiplier
@@ -137,7 +134,7 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::OnInputRelease(float TimeHel
 {
 	// TimeHeld 파라미터가 입력을 얼마나 오래 눌렀는지 나타냄
 
-	UHaroChargingProjectileWeaponInstance* WeaponInstance = GetChargingWeaponInstance();
+	UHaroRangedWeaponInstance* WeaponInstance = GetWeaponInstance();
 	if (!WeaponInstance)
 	{
 		K2_EndAbility();
@@ -149,20 +146,18 @@ void UHaroGameplayAbility_ChargingProjectileWeapon::OnInputRelease(float TimeHel
 
 	// (테스트 후 지울 예정)
 	// 차징 레벨 가져오기 (WeaponInstance에서 계산)
-	float ChargeLevel = WeaponInstance->GetChargeLevel();
+	//float ChargeLevel = WeaponInstance->GetChargeLevel();
 
 
 	// 블루프린트 이벤트 호출 (차징 끝날때에 대한.)
 	// StartProjectileTargeting();도 블루프린트에서 처리
 	OnChargingCompleted();
 
-	if (GEngine)
+	/*if (GEngine)
 	{
 		FString DebugMessage = FString::Printf(TEXT("Charged projectile fired - TimeHeld: %f, ChargeLevel: %f"), TimeHeld, ChargeLevel);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage);
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("Charged projectile fired - TimeHeld: %f, ChargeLevel: %f"), TimeHeld, ChargeLevel);
+	}*/
 }
 
 void UHaroGameplayAbility_ChargingProjectileWeapon::CleanupTasks()
