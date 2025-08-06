@@ -2,11 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Equipment/LyraGameplayAbility_FromEquipment.h"
+#include "HaroWeaponTypes.h"
 #include "HaroGameplayAbility_WeaponBase.generated.h"
 
-class ULyraWeaponInstance;
 
 /** Defines where an ability starts its trace from and where it should face */
 UENUM(BlueprintType)
@@ -38,9 +37,19 @@ class LYRAGAME_API UHaroGameplayAbility_WeaponBase : public ULyraGameplayAbility
 public:
 	UHaroGameplayAbility_WeaponBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UFUNCTION(BlueprintPure, Category = "Fire Config")
+	EHaroFireInputType GetCurrentFireInputType() const { return FireInputType; }
 protected:
 
 	// 공통 타겟팅 함수들
 	FVector GetWeaponTargetingSourceLocation() const;
 	FTransform GetTargetingTransform(APawn* SourcePawn, EHaroAbilityTargetingSource Source) const;
+
+	// 무기 탄퍼짐용 원뿔 범위 내 랜덤 방향 벡터 생성
+	FVector VRandConeNormalDistribution_Haro(const FVector& Dir, const float ConeHalfAngleRad, const float Exponent);
+
+private:
+	/** 이 어빌리티가 사용할 발사 입력 타입 (Primary/Secondary) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fire Config", meta = (AllowPrivateAccess = "true"))
+	EHaroFireInputType FireInputType = EHaroFireInputType::Primary;
 };

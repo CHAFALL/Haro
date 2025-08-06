@@ -11,6 +11,7 @@
 #include "Physics/PhysicalMaterialWithTags.h"
 #include "Teams/LyraTeamSubsystem.h"
 #include "Weapons/LyraRangedWeaponInstance.h"
+#include "Weapons/HaroRangedWeaponInstance.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraWeaponStateComponent)
 
@@ -33,9 +34,15 @@ void ULyraWeaponStateComponent::TickComponent(float DeltaTime, enum ELevelTick T
 	{
 		if (ULyraEquipmentManagerComponent* EquipmentManager = Pawn->FindComponentByClass<ULyraEquipmentManagerComponent>())
 		{
-			if (ULyraRangedWeaponInstance* CurrentWeapon = Cast<ULyraRangedWeaponInstance>(EquipmentManager->GetFirstInstanceOfType(ULyraRangedWeaponInstance::StaticClass())))
+			// 임시 -> 나중에 라이라 관련된 것을 날릴때 같이 날릴 것.
+			// 이럴줄 알았으면 바로 LyraRangedWeaponInstance를 커스텀 할 껄 그랬나??? 
+			if (ULyraRangedWeaponInstance* LyraWeapon = Cast<ULyraRangedWeaponInstance>(EquipmentManager->GetFirstInstanceOfType(ULyraRangedWeaponInstance::StaticClass())))
 			{
-				CurrentWeapon->Tick(DeltaTime);
+				LyraWeapon->Tick(DeltaTime);
+			}
+			else if (UHaroRangedWeaponInstance* HaroWeapon = Cast<UHaroRangedWeaponInstance>(EquipmentManager->GetFirstInstanceOfType(UHaroRangedWeaponInstance::StaticClass())))
+			{
+				HaroWeapon->Tick(DeltaTime);
 			}
 		}
 	}
