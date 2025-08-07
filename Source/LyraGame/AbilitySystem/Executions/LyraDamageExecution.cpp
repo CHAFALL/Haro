@@ -86,7 +86,7 @@ void ULyraDamageExecution::Execute_Implementation(const FGameplayEffectCustomExe
 	}
 
 	// Apply rules for team damage/self damage/etc...
-	float DamageInteractionAllowedMultiplier = 0.0f;
+	/*float DamageInteractionAllowedMultiplier = 0.0f;
 	if (HitActor)
 	{
 		ULyraTeamSubsystem* TeamSubsystem = HitActor->GetWorld()->GetSubsystem<ULyraTeamSubsystem>();
@@ -94,7 +94,7 @@ void ULyraDamageExecution::Execute_Implementation(const FGameplayEffectCustomExe
 		{
 			DamageInteractionAllowedMultiplier = TeamSubsystem->CanCauseDamage(EffectCauser, HitActor) ? 1.0 : 0.0;
 		}
-	}
+	}*/
 
 	// Determine distance
 	double Distance = WORLD_MAX;
@@ -127,7 +127,7 @@ void ULyraDamageExecution::Execute_Implementation(const FGameplayEffectCustomExe
 	DistanceAttenuation = FMath::Max(DistanceAttenuation, 0.0f);
 
 	// Clamping is done when damage is converted to -health
-	const float DamageDone = FMath::Max(BaseDamage * DistanceAttenuation * PhysicalMaterialAttenuation * DamageInteractionAllowedMultiplier, 0.0f);
+	const float DamageDone = FMath::Max(BaseDamage * DistanceAttenuation * PhysicalMaterialAttenuation /** DamageInteractionAllowedMultiplier*/, 0.0f);
 
 	if (DamageDone > 0.0f)
 	{

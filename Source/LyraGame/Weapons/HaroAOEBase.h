@@ -67,19 +67,14 @@ protected:
 	TObjectPtr<UNiagaraComponent> NiagaraComponent;
 
 	// AOE 설정
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Haro|AOE")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE")
 	EHaroAOEType AOEType = EHaroAOEType::Explosion;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Haro|AOE")
-	float AOERadius = 300.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Haro|AOE")
-	float Lifetime = 5.f;
-
-	// 데미지 이펙트 스펙 (투사체나 어빌리티에서 설정)
-	FGameplayEffectSpecHandle DamageEffectSpecHandle;
-
 	// 시야 확인 활성화 여부
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AOE|Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AOE")
 	bool bCheckLineOfSight = true;
+
+private:
+	// 데미지 이펙트 스펙 (어빌리티->투사체->AOE)
+	FGameplayEffectSpecHandle AOEDamageEffectSpecHandle;
 };

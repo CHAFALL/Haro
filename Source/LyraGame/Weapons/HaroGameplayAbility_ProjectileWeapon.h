@@ -6,6 +6,7 @@
 #include "HaroGameplayAbility_ProjectileWeapon.generated.h"
 
 class AHaroProjectileBase;
+class AHaroAOEBase;
 class UHaroRangedWeaponInstance;
 
 /**
@@ -34,6 +35,9 @@ protected:
 
 	virtual void ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
 
+	// AOE 설정 함수
+	virtual void ConfigureProjectileAOE(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter);
+
 	// 투사체 스폰 후 호출되는 네이티브 함수
 	virtual void OnProjectileSpawned(AHaroProjectileBase* SpawnedProjectile, UHaroRangedWeaponInstance* WeaponInstance);
 
@@ -58,15 +62,27 @@ protected:
 	void OnProjectileSpawnedBP(AHaroProjectileBase* SpawnedProjectile, UHaroRangedWeaponInstance* WeaponInstance);
 
 protected:
+	// Projectile
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	TSubclassOf<AHaroProjectileBase> ProjectileClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
+
+	// AOE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE")
+	bool bHasAOE = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (EditCondition = "bHasAOE"))
+	TSubclassOf<AHaroAOEBase> AOEClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AOE", meta = (EditCondition = "bHasAOE"))
+	TSubclassOf<UGameplayEffect> AOEDamageEffectClass;
 
 	// 타겟팅 소스 설정
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Targeting")
 	EHaroAbilityTargetingSource TargetingSource = EHaroAbilityTargetingSource::CameraTowardsFocus;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
 protected:
 	FDelegateHandle OnTargetDataReadyCallbackDelegateHandle;
 };

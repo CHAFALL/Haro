@@ -3,6 +3,7 @@
 
 #include "HaroGameplayAbility_ProjectileWeapon.h"
 #include "HaroProjectileBase.h"
+#include "HaroAOEBase.h"
 #include "LyraLogChannels.h"
 #include "Character/LyraCharacter.h"
 #include "Player/LyraPlayerController.h"
@@ -195,6 +196,9 @@ void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectilePreSpawn(AHaroPro
 	WeaponInstance->ConfigureProjectileForInput(Projectile, InputType); // GE를 제외한 모든 투사체 설정
 
 	ConfigureProjectileDamageEffect(Projectile, WeaponInstance, SourceCharacter);
+
+	// AOE 설정 추가
+	ConfigureProjectileAOE(Projectile, WeaponInstance, SourceCharacter);
 }
 
 void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileDamageEffect(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
@@ -224,6 +228,35 @@ void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileDamageEffect(AHar
 		{
 			// 투사체에 데미지 스펙 설정
 			Projectile->SetDamageEffectSpec(DamageSpec);
+		}
+	}
+}
+
+void UHaroGameplayAbility_ProjectileWeapon::ConfigureProjectileAOE(AHaroProjectileBase* Projectile, UHaroRangedWeaponInstance* WeaponInstance, ALyraCharacter* SourceCharacter)
+{
+	if (!bHasAOE || !AOEClass)
+		return;
+
+	// 1. AOE 클래스 설정
+	Projectile->SetAOEClass(AOEClass);
+
+	// 2. AOE 데미지 이펙트 스펙 생성
+	if (AOEDamageEffectClass)
+	{
+		UAbilitySystemComponent* SourceASC = SourceCharacter->GetAbilitySystemComponent();
+		if (SourceASC)
+		{
+			FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+			EffectContext.SetAbility(this);
+			EffectContext.AddSourceObject(WeaponInstance);
+
+			FGameplayEffectSpecHandle AOEDamageSpec = SourceASC->MakeOutgoingSpec(
+				AOEDamageEffectClass,
+				GetAbilityLevel(),
+				EffectContext
+			);
+
+			Projectile->SetAOEDamageSpec(AOEDamageSpec);
 		}
 	}
 }

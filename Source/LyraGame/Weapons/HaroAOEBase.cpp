@@ -6,6 +6,8 @@
 #include "Character/LyraCharacter.h"
 #include "NiagaraComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroAOEBase)
@@ -28,16 +30,13 @@ AHaroAOEBase::AHaroAOEBase(const FObjectInitializer& ObjectInitializer)
 
 void AHaroAOEBase::SetDamageEffectSpec(const FGameplayEffectSpecHandle& InDamageEffectSpec)
 {
-	DamageEffectSpecHandle = InDamageEffectSpec;
+	AOEDamageEffectSpecHandle = InDamageEffectSpec;
 }
 
 void AHaroAOEBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CollisionComponent->SetSphereRadius(AOERadius);
-	SetLifeSpan(Lifetime);
-	
 	switch (AOEType)
 	{
 	case EHaroAOEType::Explosion:
@@ -48,7 +47,6 @@ void AHaroAOEBase::BeginPlay()
 		ExecuteDOTField();
 		break;
 	}
-
 }
 
 void AHaroAOEBase::ExecuteExplosion()
@@ -173,26 +171,31 @@ float AHaroAOEBase::CalculateDistanceDamageLevel(float Distance)
 	// Distance / Radius -> FClamp(0.1, 1.0)
 	float DistanceRatio = Distance / MaxRadius;
 
-	//if (DamageFalloffCurve)
-	//{
-	//	// 커브가 있으면 커브 사용
-	//	float CurveValue = DamageFalloffCurve->GetFloatValue(DistanceRatio);
-	//	return FMath::Clamp(CurveValue, 0.1f, 1.0f);
-	//}
-	//else
-	//{
-	//	// 최소 10% 데미지 보장
-	//	return FMath::Clamp(1.0f - DistanceRatio, 0.1f, 1.0f);
-	//}
+	// 최소 10% 데미지 보장
+	// 가까우면 0.1, 멀면 1.0
+	return FMath::Clamp(DistanceRatio, 0.1f, 1.0f);
 
-	return 1.0f; // 임시
 }
 
 
 // 이렇게 많은 매개 변수가 필요할지도 고민이 됨.
 void AHaroAOEBase::ApplyDamageToTarget(AActor* Target, float DamageLevel, float Distance, FVector ExplosionCenter)
 {
-	// 일단 보류.
+	if (!Target || !AOEDamageEffectSpecHandle.IsValid())
+		return;
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!TargetASC)
+		return;
+
+	// 기존 스펙을 복사하고 레벨만 수정
+	FGameplayEffectSpec* OriginalSpec = AOEDamageEffectSpecHandle.Data.Get();
+	FGameplayEffectSpec ModifiedSpec(*OriginalSpec); // 스냅샷 복사!
+	ModifiedSpec.SetLevel(DamageLevel); // 레벨만 스케일링
+
+	// 수정된 스펙 적용
+	TargetASC->ApplyGameplayEffectSpecToSelf(ModifiedSpec);
+
 }
 
 bool AHaroAOEBase::IsValidTarget(AActor* Target) const

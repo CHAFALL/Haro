@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class AHaroAOEBase;
 
 UENUM(BlueprintType)
 enum class ECollisionDetectionType : uint8
@@ -38,6 +39,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetDamageEffectSpec(const FGameplayEffectSpecHandle& InDamageSpec);
 
+	// 어빌리티에서 AOE 설정
+	UFUNCTION(BlueprintCallable, Category = "AOE")
+	void SetAOEClass(TSubclassOf<AHaroAOEBase> InAOEClass);
+
+	UFUNCTION(BlueprintCallable, Category = "AOE")
+	void SetAOEDamageSpec(const FGameplayEffectSpecHandle& InDamageSpec);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -55,6 +63,9 @@ private:
 	UFUNCTION()
 	void HandleCollisionDetection(AActor* OtherActor, UPrimitiveComponent* OtherComponent, const FHitResult& HitResult);
 
+	virtual void ApplyDamageToTarget(AActor* TargetActor, const FHitResult& HitResult);
+
+	virtual void SpawnAOEOnHit(const FHitResult& HitResult);
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -75,8 +86,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	ECollisionDetectionType CollisionDetectionType = ECollisionDetectionType::None;
 
-	virtual void ApplyDamageToTarget(AActor* TargetActor, const FHitResult& HitResult);
-
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UActorComponent> AttachingComponent;
@@ -86,4 +95,11 @@ private:
 
 	// 데미지 이펙트 스펙 (어빌리티에서 설정)
 	FGameplayEffectSpecHandle DamageEffectSpecHandle;
+
+	// ==================== AOE 관련 ====================
+	UPROPERTY()
+	TSubclassOf<AHaroAOEBase> AOEClass;
+
+	UPROPERTY()
+	FGameplayEffectSpecHandle AOEDamageEffectSpecHandle;
 };

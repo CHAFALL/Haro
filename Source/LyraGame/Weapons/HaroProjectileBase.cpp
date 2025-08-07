@@ -3,6 +3,7 @@
 
 #include "HaroProjectileBase.h"
 #include "Components/SphereComponent.h"
+#include "HaroAOEBase.h"
 #include "Physics/LyraCollisionChannels.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "System/LyraAssetManager.h"
@@ -84,6 +85,16 @@ void AHaroProjectileBase::SetGravityScale(float NewGravityScale)
 void AHaroProjectileBase::SetDamageEffectSpec(const FGameplayEffectSpecHandle& InDamageSpec)
 {
 	DamageEffectSpecHandle = InDamageSpec;
+}
+
+void AHaroProjectileBase::SetAOEClass(TSubclassOf<AHaroAOEBase> InAOEClass)
+{
+	AOEClass = InAOEClass;
+}
+
+void AHaroProjectileBase::SetAOEDamageSpec(const FGameplayEffectSpecHandle& InDamageSpec)
+{
+	AOEDamageEffectSpecHandle = InDamageSpec;
 }
 
 void AHaroProjectileBase::HandleComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& HitResult)
@@ -190,8 +201,14 @@ void AHaroProjectileBase::HandleCollisionDetection(AActor* OtherActor, UPrimitiv
 		//	TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 		//}
 
-		// 데미지 적용.
+		// 투사체 데미지 적용.
 		ApplyDamageToTarget(OtherActor, HitResult);
+
+		// AOE 스폰 (새로 추가)
+		if (AOEClass)
+		{
+			SpawnAOEOnHit(HitResult);
+		}
 	}
 }
 
@@ -217,6 +234,47 @@ void AHaroProjectileBase::ApplyDamageToTarget(AActor* TargetActor, const FHitRes
 	FActiveGameplayEffectHandle EffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(
 		*DamageEffectSpecHandle.Data.Get()
 	);
+}
+
+void AHaroProjectileBase::SpawnAOEOnHit(const FHitResult& HitResult)
+{
+	if (!AOEClass) return;
+
+	// 서버에서만 AOE 스폰
+	if (!HasAuthority()) return;
+
+	// AOE 스폰 위치 결정
+	FVector AOELocation = HitResult.ImpactPoint;
+
+	// AOE 타입에 따른 위치 조정 (필요시)
+	
+	FTransform SpawnTransform(FRotator::ZeroRotator, AOELocation, FVector::OneVector);
+
+	AHaroAOEBase* SpawnedAOE = GetWorld()->SpawnActorDeferred<AHaroAOEBase>(
+		AOEClass,
+		SpawnTransform,
+		GetOwner(),           // 무기 액터
+		GetInstigator(),      // 플레이어 캐릭터
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+	);
+
+	if (SpawnedAOE)
+	{
+		// BeginPlay 호출 전에 데미지 스펙 설정
+		SpawnedAOE->SetDamageEffectSpec(AOEDamageEffectSpecHandle);
+
+		// 실제 스폰 완료
+		SpawnedAOE->FinishSpawning(SpawnTransform);
+
+		UE_LOG(LogTemp, Log, TEXT("AOE spawned at: %s by projectile: %s"),
+			*AOELocation.ToString(),
+			*GetClass()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn deferred AOE class: %s"),
+			AOEClass ? *AOEClass->GetName() : TEXT("NULL"));
+	}
 }
 
 
