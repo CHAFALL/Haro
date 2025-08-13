@@ -21,10 +21,6 @@ struct FHaroFireModeConfig
 {
     GENERATED_BODY()
 
-    /** 입력 타입 (Primary/Secondary) */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fire Mode")
-    EHaroFireInputType InputType = EHaroFireInputType::Primary;
-
     /** 발사 타입 (Hitscan/Projectile) */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fire Mode")
     EHaroWeaponFireType FireType = EHaroWeaponFireType::Hitscan;
@@ -62,7 +58,10 @@ public:
     // ========== 발사 모드 설정 접근자 ==========
 
     /** 입력 타입으로 발사 모드 찾기 (C++ 전용) */
-    const FHaroFireModeConfig* GetFireModeForInput(EHaroFireInputType InputType) const;
+    FORCEINLINE const FHaroFireModeConfig* GetFireModeForInput(EHaroFireInputType InputType) const
+    {
+        return FireModes.Find(InputType);
+    }
 
     /** 입력 타입으로 발사 모드 찾기 (블루프린트용) */
     /*UFUNCTION(BlueprintPure, Category = "Fire Config")
@@ -134,9 +133,9 @@ protected:
 
     // ========== 발사 모드 설정 ==========
 
-    /** 발사 모드 배열 (최대 2개: Primary, Secondary) */
+    /** 발사 모드(최대 2개: Primary, Secondary) */
     UPROPERTY(EditAnywhere, Category = "Fire Modes", meta = (TitleProperty = "InputType"))
-    TArray<FHaroFireModeConfig> FireModes;
+    TMap<EHaroFireInputType, FHaroFireModeConfig> FireModes;
 
     // ========== 확산 시스템 (기존 LyraRangedWeaponInstance와 동일) ==========
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.1), Category = "Spread|Fire Params")

@@ -201,6 +201,8 @@ void AHaroProjectileBase::HandleCollisionDetection(AActor* OtherActor, UPrimitiv
 		//	TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 		//}
 
+		// TODO 히트마커 처리 추가, 참고는 ULyraGameplayAbility_RangedWeapong로.
+
 		// 투사체 데미지 적용.
 		ApplyDamageToTarget(OtherActor, HitResult);
 

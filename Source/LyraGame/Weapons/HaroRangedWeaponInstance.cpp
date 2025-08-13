@@ -45,18 +45,6 @@ void UHaroRangedWeaponInstance::UpdateDebugVisualization()
 }
 #endif
 
-const FHaroFireModeConfig* UHaroRangedWeaponInstance::GetFireModeForInput(EHaroFireInputType InputType) const
-{
-	for (const FHaroFireModeConfig& Mode : FireModes)
-	{
-		if (Mode.InputType == InputType)
-		{
-			return &Mode;
-		}
-	}
-	return nullptr;
-}
-
 void UHaroRangedWeaponInstance::ConfigureProjectileForInput(AHaroProjectileBase* Projectile, EHaroFireInputType InputType) const
 {
 	if (const FHaroFireModeConfig* Mode = GetFireModeForInput(InputType))
@@ -70,9 +58,10 @@ void UHaroRangedWeaponInstance::ConfigureProjectileForInput(AHaroProjectileBase*
 		const FHaroProjectileFireConfig& Config = Mode->ProjectileConfig;
 		const bool bHasCharging = Config.MaxChargingTime > 0.0f;
 
+		const float BaseSpeed = Config.ProjectileSpeed;
 		const float FinalSpeed = (bHasCharging && Config.TimeToSpeedCurve.GetRichCurveConst()->HasAnyData())
-			? Config.TimeToSpeedCurve.GetRichCurveConst()->Eval(ChargingTime)
-			: Config.ProjectileSpeed;
+			? BaseSpeed * Config.TimeToSpeedCurve.GetRichCurveConst()->Eval(ChargingTime)
+			: BaseSpeed;
 
 		const float FinalSizeMultiplier = (bHasCharging && Config.TimeToSizeCurve.GetRichCurveConst()->HasAnyData())
 			? Config.TimeToSizeCurve.GetRichCurveConst()->Eval(ChargingTime)
@@ -163,14 +152,17 @@ float UHaroRangedWeaponInstance::GetProjectileSpeed(EHaroFireInputType InputType
 		{
 			const FHaroProjectileFireConfig& Config = Mode->ProjectileConfig;
 
-			// 차징 기능이 있고 차징 시간이 설정되어 있으면 차징된 속도 반환
+			// 기본 속도에서 시작
+			float BaseSpeed = Config.ProjectileSpeed;
+
+			// 차징 기능이 있고 차징 시간이 설정되어 있으면 배수 적용
 			if (Config.MaxChargingTime > 0.0f && Config.TimeToSpeedCurve.GetRichCurveConst()->HasAnyData())
 			{
-				return Config.TimeToSpeedCurve.GetRichCurveConst()->Eval(ChargingTime);
+				float SpeedMultiplier = Config.TimeToSpeedCurve.GetRichCurveConst()->Eval(ChargingTime);
+				return BaseSpeed * SpeedMultiplier;
 			}
 
-			// 일반 투사체 속도 반환
-			return Config.ProjectileSpeed;
+			return BaseSpeed;
 		}
 	}
 	return 1000.0f; // 기본값
