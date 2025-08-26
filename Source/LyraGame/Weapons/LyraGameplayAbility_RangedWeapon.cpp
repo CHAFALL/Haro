@@ -37,6 +37,10 @@ namespace LyraConsoleVariables
 		ECVF_Default);
 }
 
+
+// UE_DEFINE_GAMEPLAY_TAG_STATIC: 로컬 스태틱 태그로 해당 파일에서만 사용하는 태그
+// 컴파일 타임에 생성되어 FGameplayTag::RequestGameplayTag()보다 성능상 유리
+
 // Weapon fire will be blocked/canceled if the player has this tag
 UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_WeaponFireBlocked, "Ability.Weapon.NoFiring");
 

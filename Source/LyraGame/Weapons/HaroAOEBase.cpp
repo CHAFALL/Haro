@@ -54,6 +54,20 @@ void AHaroAOEBase::ExecuteExplosion()
 
 	OnExplosionStarted(); // 시각적 효과 (블루프린트에서)
 
+	// 폭발 범위 시각화
+	//{
+	//	float ExplosionRadius = CollisionComponent->GetScaledSphereRadius();
+	//	UKismetSystemLibrary::DrawDebugSphere(
+	//		GetWorld(),
+	//		GetActorLocation(),
+	//		ExplosionRadius,
+	//		12, // 세그먼트 수
+	//		FLinearColor::Red,
+	//		5.0f, // 지속 시간 (초)
+	//		2.0f  // 두께
+	//	);
+	//}
+
 	if (!HasAuthority()) return;
 
 	// 1. 범위 내 모든 타겟 찾기
@@ -117,17 +131,7 @@ TArray<AActor*> AHaroAOEBase::FindTargetsInRange()
 		OverlappingActors
 	);
 
-	// 유효한 타겟만 필터링
-	TArray<AActor*> ValidTargets;
-	for (AActor* Actor : OverlappingActors)
-	{
-		if (Actor && IsValidTarget(Actor))
-		{
-			ValidTargets.Add(Actor);
-		}
-	}
-
-	return ValidTargets;
+	return OverlappingActors;
 }
 
 

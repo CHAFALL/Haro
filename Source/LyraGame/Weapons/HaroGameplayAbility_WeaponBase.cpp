@@ -17,6 +17,7 @@ UHaroGameplayAbility_WeaponBase::UHaroGameplayAbility_WeaponBase(const FObjectIn
 	//SourceBlockedTags.AddTag(TAG_WeaponFireBlocked);
 	
 	// 간단한 방식 - 태그를 직접 생성
+    // 해당 방식은 런타임에 검색해서 주석처리한 위의 방식보다 느림.
 	SourceBlockedTags.AddTag(FGameplayTag::RequestGameplayTag("Ability.Weapon.NoFiring"));
 }
 
