@@ -11,6 +11,7 @@ class UPrimaryDataAsset;
 
 class ULyraGameData;
 class ULyraPawnData;
+class UHaroSkillData;
 
 struct FLyraBundles
 {
@@ -50,6 +51,7 @@ public:
 
 	const ULyraGameData& GetGameData();
 	const ULyraPawnData* GetDefaultPawnData() const;
+	const UHaroSkillData& GetSkillData();
 
 protected:
 	template <typename GameDataClass>
@@ -85,6 +87,9 @@ protected:
 	// Global game data asset to use.
 	UPROPERTY(Config)
 	TSoftObjectPtr<ULyraGameData> LyraGameDataPath;
+
+	UPROPERTY(Config)
+	TSoftObjectPtr<UHaroSkillData> HaroSkillDataPath;
 
 	// Loaded version of the game data
 	UPROPERTY(Transient)

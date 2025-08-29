@@ -23,6 +23,9 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 
+	// 스킬 데이터 조회 테스트 함수
+	void TestSkillDataRetrieval();
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UHaroSkillEntryWidget> SkillEntryWidgetClass;

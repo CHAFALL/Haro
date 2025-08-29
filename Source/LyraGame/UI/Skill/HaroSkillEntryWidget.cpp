@@ -3,11 +3,12 @@
 
 #include "HaroSkillEntryWidget.h"
 #include "HaroSkillSelectionWidget.h"
-#include "AbilitySystem/Abilities/LyraGameplayAbility.h"
 #include "Components/Image.h"
 #include "Components/Button.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
+
+#include "AbilitySystem/Abilities/LyraGameplayAbility.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroSkillEntryWidget)
 
