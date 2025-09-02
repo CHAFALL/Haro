@@ -29,6 +29,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftClassPtr<ULyraGameplayAbility> AbilityClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
+    int32 SkillLevel = 1;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FName> RequiredSkillIDs;
 

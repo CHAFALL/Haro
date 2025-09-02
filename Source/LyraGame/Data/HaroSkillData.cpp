@@ -53,26 +53,29 @@ void UHaroSkillData::RefreshSkillCache()
 	// -> 이것도 그냥 TSoftObjectPtr 대신에 TObjectPtr로 변경하니 해결됨.
 	if (UDataTable* Table = WeaponSkillDataTable.Get())
 	{
-		// DataTable의 모든 Row를 배열로 가져오기
-		TArray<FHaroSkillDataRow*> AllRows;
-		Table->GetAllRows<FHaroSkillDataRow>("", AllRows);
-
-		for (FHaroSkillDataRow* Row : AllRows)
-		{
-			if (Row && Row->GameplayTag.IsValid())
+		Table->ForeachRow<FHaroSkillDataRow>("RefreshSkillCache",
+			[this](const FName& RowName, const FHaroSkillDataRow& Row)
 			{
-				// 해당 태그의 배열을 찾거나 새로 생성하고 스킬 데이터를 배열에 추가
-				CachedSkillsByTag.FindOrAdd(Row->GameplayTag).Skills.Add(*Row);
-			}
-		}
+				if (Row.GameplayTag.IsValid())
+				{
+					// Entry 생성
+					FHaroSkillDataEntry Entry;
+					Entry.SkillID = RowName;
+					Entry.SkillData = Row;
+
+					// 해당 태그의 배열을 찾거나 새로 생성하고 스킬 Entry를 추가
+					CachedSkillsByTag.FindOrAdd(Row.GameplayTag).Skills.Add(Entry);
+				}
+				return true; // continue iteration
+			});
 	}
 }
 
-TArray<FHaroSkillDataRow> UHaroSkillData::GetSkillsByTag(const FGameplayTag& Tag) const
+TArray<FHaroSkillDataEntry> UHaroSkillData::GetSkillsByTag(const FGameplayTag& Tag) const
 {
 	// 캐시에서 해당 태그를 찾기
 	const FHaroSkillDataArray* Found = CachedSkillsByTag.Find(Tag);
 
 	// 찾았으면 Skills 배열 반환, 못 찾으면 빈 배열 반환
-	return Found ? Found->Skills : TArray<FHaroSkillDataRow>();
+	return Found ? Found->Skills : TArray<FHaroSkillDataEntry>();
 }

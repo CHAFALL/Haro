@@ -8,6 +8,17 @@
 #include "Items/Skill/HaroSkillDataTypes.h"
 #include "HaroSkillData.generated.h"
 
+USTRUCT(BlueprintType)
+struct FHaroSkillDataEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FName SkillID; // Row Name
+
+	UPROPERTY(BlueprintReadOnly)
+	FHaroSkillDataRow SkillData;
+};
 
 USTRUCT(BlueprintType)
 struct FHaroSkillDataArray
@@ -15,12 +26,9 @@ struct FHaroSkillDataArray
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	TArray<FHaroSkillDataRow> Skills;
+	TArray<FHaroSkillDataEntry> Skills;
 
 	// 편의 함수들
-	void Add(const FHaroSkillDataRow& Skill) { Skills.Add(Skill); }
-	int32 Num() const { return Skills.Num(); }
-	const FHaroSkillDataRow& operator[](int32 Index) const { return Skills[Index]; }
 };
 
 /**
@@ -56,7 +64,7 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	TArray<FHaroSkillDataRow> GetSkillsByTag(const FGameplayTag& Tag) const;
+	TArray<FHaroSkillDataEntry> GetSkillsByTag(const FGameplayTag& Tag) const;
 
 public:
 	// 원본 TSoftObjectPtr 대신에 TObjectPtr로 변경.

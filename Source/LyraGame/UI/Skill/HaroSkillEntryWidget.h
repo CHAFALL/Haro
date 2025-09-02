@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CommonUserWidget.h"
+#include "Data/HaroSkillData.h"
 #include "HaroSkillEntryWidget.generated.h"
 
 class URichTextBlock;
@@ -10,6 +11,7 @@ class UTextBlock;
 class UButton;
 class UImage;
 class UHaroSkillSelectionWidget;
+class UHaroSkillSelectComponent;
 
 /**
  * 
@@ -22,12 +24,17 @@ class LYRAGAME_API UHaroSkillEntryWidget : public UCommonUserWidget
 public:
 	UHaroSkillEntryWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
-	// 스킬 타입도 같이 해서 받거나 하기
-	void InitializeUI(UHaroSkillSelectionWidget* OwnerWidget);
+	UFUNCTION(BlueprintCallable)
+	void SetInfo(UHaroSkillSelectionWidget* InOwnerWidget, const FHaroSkillDataEntry& InSkillData);
+
+	void RefreshUI();
+
+protected:
+	UFUNCTION(BlueprintCallable)
+	void OnButtonClicked();
 
 private:
-	UFUNCTION()
-	void OnButtonClicked();
+	UHaroSkillSelectComponent* GetSkillSelectComponent() const;
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -43,8 +50,8 @@ protected:
 	TObjectPtr<URichTextBlock> Text_SkillDescription;
 
 private:
-
-	// 여기에 스킬 타입도 cache해야 할지도.
+	UPROPERTY()
+	FHaroSkillDataEntry SkillData;
 
 	UPROPERTY()
 	TWeakObjectPtr<UHaroSkillSelectionWidget> CachedOwnerWidget;
