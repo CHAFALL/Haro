@@ -24,7 +24,7 @@ public:
     TSoftObjectPtr<UTexture2D> IconTexture;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FGameplayTag GameplayTag;
+    FGameplayTag CategoryTag;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftClassPtr<ULyraGameplayAbility> AbilityClass;
@@ -33,8 +33,14 @@ public:
     int32 SkillLevel = 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FGameplayTag InputTag; 
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FName> RequiredSkillIDs;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FName> ConflictSkillIDs;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FName> ReplaceSkillIDs; 
 };

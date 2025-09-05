@@ -49,10 +49,37 @@ void AHaroAOEBase::BeginPlay()
 	}
 }
 
+void AHaroAOEBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 모든 남은 DOT 효과들 제거
+	if (!ActiveEffectHandles.IsEmpty())
+	{
+		TArray<FActiveGameplayEffectHandle> HandlesToRemove;
+		for (auto HandlePair : ActiveEffectHandles)
+		{
+			if (UAbilitySystemComponent* ASC = HandlePair.Value)
+			{
+				if (IsValid(ASC))
+				{
+					ASC->RemoveActiveGameplayEffect(HandlePair.Key, 1);
+				}
+			}
+			HandlesToRemove.Add(HandlePair.Key);
+		}
+
+		for (auto& Handle : HandlesToRemove)
+		{
+			ActiveEffectHandles.FindAndRemoveChecked(Handle);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void AHaroAOEBase::ExecuteExplosion()
 {
 
-	OnExplosionStarted(); // 시각적 효과 (블루프린트에서)
+	OnAOEStarted(); // 시각적 효과 (블루프린트에서)
 
 	// 폭발 범위 시각화
 	//{
@@ -74,7 +101,7 @@ void AHaroAOEBase::ExecuteExplosion()
 	TArray<AActor*> AllTargets = FindTargetsInRange();
 	if (AllTargets.Num() == 0)
 	{
-		OnExplosionCompleted();
+		OnAOECompleted();
 		return;
 	}
 
@@ -96,21 +123,37 @@ void AHaroAOEBase::ExecuteExplosion()
 		}
 
 		// 4. 거리별 데미지 계산 및 적용
-		float Distance = FVector::Dist(ExplosionCenter, CurrentTarget->GetActorLocation());
-		float DamageLevel = CalculateDistanceDamageLevel(Distance);
-
-		if (DamageLevel > 0.0f)
+		if (bUseDistanceBasedDamage)
 		{
-			ApplyDamageToTarget(CurrentTarget, DamageLevel, Distance, ExplosionCenter);
+			float Distance = FVector::Dist(ExplosionCenter, CurrentTarget->GetActorLocation());
+			float DamageLevel = CalculateDistanceDamageLevel(Distance);
+
+			if (DamageLevel > 0.0f)
+			{
+				ApplyDistanceBasedDamageToTarget(CurrentTarget, DamageLevel);
+			}
+		}
+		else
+		{
+			// 거리 상관없이 고정 데미지
+			ApplyDamageToTarget(CurrentTarget);
 		}
 	}
 
-	// 5. 폭발 완료 처리
-	OnExplosionCompleted();
+	// 5. 완료 처리
+	OnAOECompleted();
 }
 
 void AHaroAOEBase::ExecuteDOTField()
 {
+	OnAOEStarted(); // 시각적 효과
+
+	if (!HasAuthority()) return;
+
+	SetLifeSpan(DOTFieldLifeSpan);
+
+	// 컬리전을 트리거로 설정하여 블루프린트에서 오버랩 감지 가능하게
+	CollisionComponent->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 TArray<AActor*> AHaroAOEBase::FindTargetsInRange()
@@ -134,7 +177,39 @@ TArray<AActor*> AHaroAOEBase::FindTargetsInRange()
 	return OverlappingActors;
 }
 
+void AHaroAOEBase::OnAOECompleted()
+{
+	// 블루프린트
+	OnAOEFinished();
+}
 
+void AHaroAOEBase::OnOverlap(AActor* TargetActor)
+{
+	if (!HasAuthority()) return;
+
+	if (IsValidTarget(TargetActor))
+	{
+		// 시야 체크 (필요한 경우)
+		if (bCheckLineOfSight)
+		{
+			TArray<AActor*> AllTargets = { TargetActor }; // 단일 타겟용
+			if (!CheckLineOfSight(GetActorLocation(), TargetActor, AllTargets))
+			{
+				return; // 시야 막힘
+			}
+		}
+
+		ApplyDOTEffectToTarget(TargetActor);
+	}
+}
+
+void AHaroAOEBase::OnEndOverlap(AActor* TargetActor)
+{
+	if (!HasAuthority()) return;
+
+	RemoveDOTEffectFromTarget(TargetActor);
+
+}
 
 bool AHaroAOEBase::CheckLineOfSight(FVector ExplosionCenter, AActor* TargetActor, const TArray<AActor*>& AllTargets)
 {
@@ -166,6 +241,15 @@ bool AHaroAOEBase::CheckLineOfSight(FVector ExplosionCenter, AActor* TargetActor
 	return !bHit || (HitResult.GetActor() == TargetActor);
 }
 
+bool AHaroAOEBase::IsValidTarget(AActor* Target) const
+{
+	if (!Target) return false;
+	if (Target == GetOwner()) return false;
+	if (!Target->IsA<ALyraCharacter>()) return false;
+
+	return true;
+}
+
 float AHaroAOEBase::CalculateDistanceDamageLevel(float Distance)
 {
 	float MaxRadius = CollisionComponent->GetScaledSphereRadius();
@@ -183,7 +267,7 @@ float AHaroAOEBase::CalculateDistanceDamageLevel(float Distance)
 
 
 // 이렇게 많은 매개 변수가 필요할지도 고민이 됨.
-void AHaroAOEBase::ApplyDamageToTarget(AActor* Target, float DamageLevel, float Distance, FVector ExplosionCenter)
+void AHaroAOEBase::ApplyDistanceBasedDamageToTarget(AActor* Target, float DamageLevel)
 {
 	if (!Target || !AOEDamageEffectSpecHandle.IsValid())
 		return;
@@ -202,19 +286,64 @@ void AHaroAOEBase::ApplyDamageToTarget(AActor* Target, float DamageLevel, float 
 
 }
 
-bool AHaroAOEBase::IsValidTarget(AActor* Target) const
-{
-	if (!Target) return false;
-	if (Target == GetOwner()) return false;
-	if (!Target->IsA<ALyraCharacter>()) return false;
 
-	return true;
+void AHaroAOEBase::ApplyDamageToTarget(AActor* Target)
+{
+	if (!Target || !AOEDamageEffectSpecHandle.IsValid())
+		return;
+
+	// 타겟의 AbilitySystemComponent 찾기
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!TargetASC) return;
+
+	// GameplayEffect 적용
+	TargetASC->ApplyGameplayEffectSpecToSelf(*AOEDamageEffectSpecHandle.Data.Get());
 }
 
-void AHaroAOEBase::OnExplosionCompleted()
+void AHaroAOEBase::ApplyDOTEffectToTarget(AActor* Target)
 {
-	// 블루프린트
-	OnExplosionFinished();
+	if (!Target || !AOEDamageEffectSpecHandle.IsValid())
+		return;
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!TargetASC) return;
+
+	
+	const FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(
+		*AOEDamageEffectSpecHandle.Data.Get()
+	);
+
+	// Infinite로 설정되어있으면 따로 처리 필요함.
+	const bool bIsInfinite = AOEDamageEffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Infinite;
+	if (bIsInfinite && ActiveEffectHandle.IsValid())
+	{
+		ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+	}
+
 }
 
+void AHaroAOEBase::RemoveDOTEffectFromTarget(AActor* Target)
+{
+	if (!Target) return;
 
+	if (ActiveEffectHandles.IsEmpty()) return;
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!IsValid(TargetASC)) return;
+
+	TArray<FActiveGameplayEffectHandle> HandlesToRemove;
+	for (auto HandlePair : ActiveEffectHandles)
+	{
+		if (TargetASC == HandlePair.Value)
+		{
+			TargetASC->RemoveActiveGameplayEffect(HandlePair.Key, 1);
+			HandlesToRemove.Add(HandlePair.Key);
+		}
+	}
+
+	// 별도 루프에서 맵에서 제거
+	for (auto& Handle : HandlesToRemove)
+	{
+		ActiveEffectHandles.FindAndRemoveChecked(Handle);
+	}
+}

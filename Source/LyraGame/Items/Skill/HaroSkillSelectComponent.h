@@ -26,6 +26,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Skill Selection")
 	bool ApplySelectedSkill(const FHaroSkillDataEntry& SelectedSkill);
 
+	// 소유한 스킬 맵 조작 관련 헬퍼 함수들 (맵만 조작함.) -> 이것도 playerState로 넘어갈지도.
+	bool RegisterSkillHandle(const FName& SkillID, const FGameplayAbilitySpecHandle& Handle);
+	bool UnregisterSkillHandle(const FName& SkillID);
+
 protected:
 	virtual void BeginPlay() override;
 		
@@ -41,6 +45,10 @@ private:
 	// 랜덤 선택 헬퍼
 	TArray<FHaroSkillDataEntry> SelectRandomSkills(const TArray<FHaroSkillDataEntry>& AvailableSkills, int32 Count) const;
 
+	// 선택된 스킬 부여 관련 헬퍼 함수들
+	bool RemoveReplacedSkill(const TArray<FName>& ReplaceSkillIDs, UAbilitySystemComponent* ASC, /*OUT*/ UObject*& OutSourceObject);
+	bool AddNewSkill(const FName& SkillID, const FHaroSkillDataRow& SkillData, UClass* AbilityClass, UAbilitySystemComponent* ASC, UObject* SourceObject);
+
 	UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 protected:
@@ -48,9 +56,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Current State")
 	TArray<FGameplayTag> CurrentWeaponTags;
 
-	// 현재 플레이어가 보유한 스킬 ID들 -> playerstate로 뺄듯?
+	// 현재 플레이어가 보유한 스킬 {ID : Handle} -> playerstate로 뺄듯?
 	UPROPERTY(BlueprintReadOnly, Category = "Current State")
-	TSet<FName> OwnedSkillIDs;
+	TMap<FName, FGameplayAbilitySpecHandle> OwnedSkillHandles;
 
 	// 한 번에 제공할 스킬 옵션 개수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")

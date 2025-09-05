@@ -25,7 +25,8 @@ void UHaroSkillData::PreSave(FObjectPreSaveContext SaveContext)
 	// 남은 문제점: TSoftObjectPtr로 하다보니깐 실제 값이 바뀐 것은 감지 못함.
 	// (경로 자체가 바뀔 때는 감지 함.)
 	// 테스트를 하려면 껏다가 켜야됨...
-	// TSoftObjectPtr 대신에 TObjectPtr로 변경로 변경하니 해결됨.
+	// TSoftObjectPtr 대신에 TObjectPtr로 변경로 변경하니 해결되어야 하는데 왜 안되지???
+	// -> 좀 더 연구 필요.
 }
 #endif
 
@@ -56,7 +57,7 @@ void UHaroSkillData::RefreshSkillCache()
 		Table->ForeachRow<FHaroSkillDataRow>("RefreshSkillCache",
 			[this](const FName& RowName, const FHaroSkillDataRow& Row)
 			{
-				if (Row.GameplayTag.IsValid())
+				if (Row.CategoryTag.IsValid())
 				{
 					// Entry 생성
 					FHaroSkillDataEntry Entry;
@@ -64,7 +65,7 @@ void UHaroSkillData::RefreshSkillCache()
 					Entry.SkillData = Row;
 
 					// 해당 태그의 배열을 찾거나 새로 생성하고 스킬 Entry를 추가
-					CachedSkillsByTag.FindOrAdd(Row.GameplayTag).Skills.Add(Entry);
+					CachedSkillsByTag.FindOrAdd(Row.CategoryTag).Skills.Add(Entry);
 				}
 				return true; // continue iteration
 			});
