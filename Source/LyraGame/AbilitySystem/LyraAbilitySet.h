@@ -16,6 +16,8 @@ class ULyraAbilitySystemComponent;
 class ULyraGameplayAbility;
 class UObject;
 
+// 추가
+struct FHaroEquipmentList;
 
 /**
  * FLyraAbilitySet_GameplayAbility
@@ -91,6 +93,7 @@ struct FLyraAbilitySet_GrantedHandles
 {
 	GENERATED_BODY()
 
+	friend struct FHaroEquipmentList; // 추가
 public:
 
 	void AddAbilitySpecHandle(const FGameplayAbilitySpecHandle& Handle);
