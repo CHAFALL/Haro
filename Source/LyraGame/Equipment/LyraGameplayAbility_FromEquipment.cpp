@@ -3,6 +3,9 @@
 #include "LyraGameplayAbility_FromEquipment.h"
 #include "LyraEquipmentInstance.h"
 #include "Inventory/LyraInventoryItemInstance.h"
+#include "AbilitySystem/LyraAbilitySystemComponent.h" 
+#include "LyraGameplayTags.h"
+
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -32,6 +35,18 @@ ULyraInventoryItemInstance* ULyraGameplayAbility_FromEquipment::GetAssociatedIte
 		return Cast<ULyraInventoryItemInstance>(Equipment->GetInstigator());
 	}
 	return nullptr;
+}
+
+bool ULyraGameplayAbility_FromEquipment::IsWeaponSlotActive() const
+{
+	ULyraEquipmentInstance* Equipment = GetAssociatedEquipment();
+	if (!Equipment)
+		return false;
+
+	return Equipment->bIsActive;
+	
+	// 원래는 태그 방식으로 했었는데 ASC를 계속 제대로 못 잡아내는 바람에 이 방식으로 변경.
+	// 이 방식도 괜찮은듯!
 }
 
 

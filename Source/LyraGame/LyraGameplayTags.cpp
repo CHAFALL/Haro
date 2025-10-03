@@ -58,6 +58,11 @@ namespace LyraGameplayTags
 	// When extending Lyra, you can create your own movement modes but you need to update GetCustomMovementModeTagMap()
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Movement_Mode_Custom, "Movement.Mode.Custom", "This is invalid and should be replaced with custom tags.  See LyraGameplayTags::CustomMovementModeTagMap.");
 
+	// 추가 (슬롯 활성화 관련)
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Weapon_Slot0_Active, "Ability.Weapon.Slot0.Active", "Slot 0 weapon is active");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Weapon_Slot1_Active, "Ability.Weapon.Slot1.Active", "Slot 1 weapon is active");
+
 	// Unreal Movement Modes
 	const TMap<uint8, FGameplayTag> MovementModeTagMap =
 	{

@@ -94,4 +94,7 @@ public:
 		return (GetSpawnedActors().Num() > 0) ? GetSpawnedActors()[0] : nullptr;
 	}
 
+	// 추가 (활성화 여부) - Temp
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Equipment")
+	bool bIsActive = false;
 };

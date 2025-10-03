@@ -40,6 +40,7 @@ void ULyraEquipmentInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 
 	DOREPLIFETIME(ThisClass, Instigator);
 	DOREPLIFETIME(ThisClass, SpawnedActors);
+	DOREPLIFETIME(ThisClass, bIsActive);
 }
 
 #if UE_WITH_IRIS

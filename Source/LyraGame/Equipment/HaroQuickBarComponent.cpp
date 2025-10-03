@@ -97,6 +97,7 @@ void UHaroQuickBarComponent::EquipItemInSlot(int32 SlotIndex, ULyraInventoryItem
 		{
 			if (UHaroEquipmentManagerComponent* EquipmentManager = FindEquipmentManager())
 			{
+
 				// 장비 생성 (비활성화 상태로 생성해옴.)
 				ULyraEquipmentInstance* NewEquipment = EquipmentManager->EquipItem(EquipInfo->EquipmentDefinition, SlotIndex);
 				if (NewEquipment)
@@ -133,7 +134,7 @@ UHaroEquipmentManagerComponent* UHaroQuickBarComponent::FindEquipmentManager() c
 	return nullptr;
 }
 
-// 활성 슬롯 변경 (Server RPC)
+// 활성 슬롯 변경 (Server RPC) - 핵심 차이점.
 void UHaroQuickBarComponent::SetActiveSlotIndex_Implementation(int32 NewIndex)
 {
 	if (!Slots.IsValidIndex(NewIndex) || ActiveSlotIndex == NewIndex)
@@ -204,9 +205,10 @@ void UHaroQuickBarComponent::AddItemToSlot(int32 SlotIndex, ULyraInventoryItemIn
 		{
 			Slots[SlotIndex] = Item;
 
-			EquipItemInSlot(SlotIndex, Item);
+			OnRep_Slots(); // 슬롯 정보를 먼저 전달하고
 
-			OnRep_Slots();
+			EquipItemInSlot(SlotIndex, Item); // 그 다음 활성화
+
 		}
 	}
 }

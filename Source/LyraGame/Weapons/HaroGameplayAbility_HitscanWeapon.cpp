@@ -7,7 +7,7 @@
 #include "LyraLogChannels.h"
 #include "AIController.h"
 #include "NativeGameplayTags.h"
-#include "Weapons/LyraWeaponStateComponent.h"
+#include "Weapons/HaroWeaponStateComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/LyraGameplayAbilityTargetData_SingleTargetHit.h"
 #include "DrawDebugHelpers.h"
@@ -50,6 +50,10 @@ UHaroGameplayAbility_HitscanWeapon::UHaroGameplayAbility_HitscanWeapon(const FOb
 
 bool UHaroGameplayAbility_HitscanWeapon::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
+	// 슬롯 활성화 체크
+	if (!IsWeaponSlotActive())
+		return false;
+
 	bool bResult = Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 
 	if (bResult)
@@ -376,7 +380,7 @@ void UHaroGameplayAbility_HitscanWeapon::OnTargetDataReadyCallback(const FGamepl
 				if (Controller->GetLocalRole() == ROLE_Authority)
 				{
 					// Confirm hit markers
-					if (ULyraWeaponStateComponent* WeaponStateComponent = Controller->FindComponentByClass<ULyraWeaponStateComponent>())
+					if (UHaroWeaponStateComponent* WeaponStateComponent = Controller->FindComponentByClass<UHaroWeaponStateComponent>())
 					{
 						TArray<uint8> HitReplaces;
 						for (uint8 i = 0; (i < LocalTargetDataHandle.Num()) && (i < 255); ++i)
@@ -433,7 +437,7 @@ void UHaroGameplayAbility_HitscanWeapon::StartHitscanWeaponTargeting()
 
 	AController* Controller = GetControllerFromActorInfo();
 	check(Controller);
-	ULyraWeaponStateComponent* WeaponStateComponent = Controller->FindComponentByClass<ULyraWeaponStateComponent>();
+	UHaroWeaponStateComponent* WeaponStateComponent = Controller->FindComponentByClass<UHaroWeaponStateComponent>();
 
 	FScopedPredictionWindow ScopedPrediction(MyAbilityComponent, CurrentActivationInfo.GetActivationPredictionKey());
 

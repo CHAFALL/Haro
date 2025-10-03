@@ -29,6 +29,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lyra|Ability")
 	ULyraInventoryItemInstance* GetAssociatedItem() const;
 
+	// (추가)
+	// 슬롯 활성화 체크 함수
+	UFUNCTION(BlueprintPure, Category = "Lyra|Ability")
+	bool IsWeaponSlotActive() const;
+
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif

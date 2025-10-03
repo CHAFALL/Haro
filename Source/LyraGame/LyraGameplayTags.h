@@ -60,4 +60,8 @@ namespace LyraGameplayTags
 	LYRAGAME_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Mode_Flying);
 
 	LYRAGAME_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Mode_Custom);
+
+	// 추가 (슬롯 활성화 관련) - 필요없어졌지만 일단 두기로 함.
+	LYRAGAME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Weapon_Slot0_Active);
+	LYRAGAME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Weapon_Slot1_Active);
 };

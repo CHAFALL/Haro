@@ -12,7 +12,8 @@
 				"DeveloperSettings",
 				"Engine",
 				"CommonUI",
-				"ModularGameplay"
+				"ModularGameplay",
+				"UMG"
 			]
 		},
 		{

@@ -86,10 +86,6 @@ public:
 	ULyraEquipmentInstance* AddEntry(TSubclassOf<ULyraEquipmentDefinition> EquipmentDefinition, int32 SlotIndex);
 	void RemoveEntry(int32 SlotIndex);
 
-	// 추가
-	void ActivateEntryHandles(FHaroAppliedEquipmentEntry& Entry);
-	void DeactivateEntryHandles(FHaroAppliedEquipmentEntry& Entry);
-
 private:
 	ULyraAbilitySystemComponent* GetAbilitySystemComponent() const;
 
@@ -101,7 +97,7 @@ private:
 	TArray<FHaroAppliedEquipmentEntry> Entries; // 모든 장착된 장비들
 
 
-	// 
+	// -> 아,,, GetAbilitySystemComponent(ASC)가 문제였던 이유가 이거때문이었구나.... (이미 다르게 해결함.)
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UActorComponent> OwnerComponent; // 이 리스트를 소유한 컴포넌트 (각 클라에서 자체적으로 설정)
 };
@@ -143,6 +139,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void DeactivateItem(int32 SlotIndex);
 
+	// helper 함수
+	void SetItemActiveState(int32 SlotIndex, bool bActive);
 
 	//~UObject interface
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
@@ -159,14 +157,29 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	ULyraEquipmentInstance* GetFirstInstanceOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType);
 
+	// (추가) 활성화 된 것만 한번 더 걸러냄 - 위의 함수에서
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	ULyraEquipmentInstance* GetFirstActiveInstanceOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType);
+
 	/** Returns all equipped instances of a given type, or an empty array if none are found */
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<ULyraEquipmentInstance*> GetEquipmentInstancesOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType) const;
+
+	// (추가) 활성화 된 것만 한번 더 걸러냄 - 위의 함수에서
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	TArray<ULyraEquipmentInstance*> GetActiveEquipmentInstancesOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType) const;
 
 	template <typename T>
 	T* GetFirstInstanceOfType()
 	{
 		return (T*)GetFirstInstanceOfType(T::StaticClass());
+	}
+
+	// (추가) 활성화 된 것만 한번 더 걸러냄 - 위의 함수에서
+	template <typename T>
+	T* GetFirstActiveInstanceOfType()
+	{
+		return (T*)GetFirstActiveInstanceOfType(T::StaticClass());
 	}
 
 private:

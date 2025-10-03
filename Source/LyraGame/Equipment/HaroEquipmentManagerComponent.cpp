@@ -9,6 +9,7 @@
 #include "LyraEquipmentDefinition.h"
 #include "LyraEquipmentInstance.h"
 #include "Net/UnrealNetwork.h"
+#include "LyraGameplayTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroEquipmentManagerComponent)
 
@@ -53,11 +54,41 @@ void FHaroEquipmentList::PostReplicatedAdd(const TArrayView<int32> AddedIndices,
 
 void FHaroEquipmentList::PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize)
 {
-	// 	for (int32 Index : ChangedIndices)
-	// 	{
-	// 		const FGameplayTagStack& Stack = Stacks[Index];
-	// 		TagToCountMap[Stack.Tag] = Stack.StackCount;
-	// 	}
+	// 클라이언트에서 bIsActive가 변경되면 여기가 자동 실행됨!
+	for (int32 Index : ChangedIndices)
+	{
+		const FHaroAppliedEquipmentEntry& Entry = Entries[Index];
+		if (Entry.Instance != nullptr)
+		{
+			if (Entry.bIsActive)
+			{
+				// 활성화: 먼저 보이기 → 그 다음 OnEquipped
+				for (AActor* Actor : Entry.Instance->GetSpawnedActors())
+				{
+					if (Actor)
+					{
+						Actor->SetActorHiddenInGame(false);
+						Actor->SetActorEnableCollision(true);
+					}
+				}
+				Entry.Instance->OnEquipped();
+			}
+			else
+			{
+				// 비활성화: 먼저 OnUnequipped → 그 다음 숨기기
+				//Entry.Instance->OnUnequipped(); // 이거 필요 없을 수도 있음. (TEMP) -> 실제 삭제될 때만 필요함.
+				// 이렇게 할꺼면 코드 더 다듬을 수 있긴 한데 일단 둠.
+				for (AActor* Actor : Entry.Instance->GetSpawnedActors())
+				{
+					if (Actor)
+					{
+						Actor->SetActorHiddenInGame(true);
+						Actor->SetActorEnableCollision(false);
+					}
+				}
+			}
+		}
+	}
 }
 
 ULyraAbilitySystemComponent* FHaroEquipmentList::GetAbilitySystemComponent() const
@@ -135,55 +166,6 @@ void FHaroEquipmentList::RemoveEntry(int32 SlotIndex)
 	}
 }
 
-void FHaroEquipmentList::ActivateEntryHandles(FHaroAppliedEquipmentEntry& Entry)
-{
-	ULyraAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ActivateEntryHandles: ASC not found"));
-		return;
-	}
-
-	// Ability Handle 활성화 (입력 차단 해제)
-	for (const FGameplayAbilitySpecHandle& Handle : Entry.GrantedHandles.AbilitySpecHandles)
-	{
-		if (FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Handle))
-		{
-			// 입력 차단 해제
-			ASC->UnBlockAbilityByInputID(Spec->InputID);
-		}
-	}
-
-	//// GameplayEffect 활성화 (무기 강화 효과 등)
-	//for (const FActiveGameplayEffectHandle& Handle : Entry.GrantedHandles.GameplayEffectHandles)
-	//{
-	//	// Effect 레벨을 원래대로 복구 (0에서 원래 레벨로)
-	//	ASC->SetActiveGameplayEffectLevel(Handle, 1);  // 또는 저장해둔 원래 레벨
-	//}
-}
-
-void FHaroEquipmentList::DeactivateEntryHandles(FHaroAppliedEquipmentEntry& Entry)
-{
-	ULyraAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
-
-	// Ability 비활성화
-	for (const FGameplayAbilitySpecHandle& Handle : Entry.GrantedHandles.AbilitySpecHandles)
-	{
-		if (FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Handle))
-		{
-			ASC->BlockAbilityByInputID(Spec->InputID);
-		}
-	}
-
-	//// GameplayEffect 비활성화 (강화 효과도 함께 꺼짐)
-	//for (const FActiveGameplayEffectHandle& Handle : Entry.GrantedHandles.GameplayEffectHandles)
-	//{
-	//	// Effect 레벨을 0으로 설정 (효과 없음)
-	//	ASC->SetActiveGameplayEffectLevel(Handle, 0);
-	//}
-}
-
 //////////////////////////////////////////////////////////////////////
 // UHaroEquipmentManagerComponent
 
@@ -246,54 +228,60 @@ void UHaroEquipmentManagerComponent::UnequipItem(int32 SlotIndex)
 	}
 }
 
-void UHaroEquipmentManagerComponent::ActivateItem(int32 SlotIndex)
+void UHaroEquipmentManagerComponent::SetItemActiveState(int32 SlotIndex, bool bActive)
 {
 	for (FHaroAppliedEquipmentEntry& Entry : EquipmentList.Entries)
 	{
 		if (Entry.SlotIndex == SlotIndex)
 		{
-			// 이미 활성화되어 있으면 스킵
-			if (Entry.bIsActive)
+			// 이미 원하는 상태면 스킵
+			if (Entry.bIsActive == bActive)
 				return;
 
-			// Handle 활성화
-			EquipmentList.ActivateEntryHandles(Entry);
-
-			// Instance 활성화 (비주얼, 액터 등)
-			Entry.Instance->OnEquipped();
+			if (bActive)
+			{
+				// 활성화: 먼저 보이기 → 그 다음 OnEquipped
+				for (AActor* Actor : Entry.Instance->GetSpawnedActors())
+				{
+					if (Actor)
+					{
+						Actor->SetActorHiddenInGame(false);
+						Actor->SetActorEnableCollision(true);
+					}
+				}
+				Entry.Instance->OnEquipped();
+			}
+			else
+			{
+				// 비활성화: 먼저 OnUnequipped → 그 다음 숨기기
+				//Entry.Instance->OnUnequipped(); // 이거 필요 없을 수도 있음. (TEMP)
+				for (AActor* Actor : Entry.Instance->GetSpawnedActors())
+				{
+					if (Actor)
+					{
+						Actor->SetActorHiddenInGame(true);
+						Actor->SetActorEnableCollision(false);
+					}
+				}
+			}
 
 			// 상태 플래그 설정
-			Entry.bIsActive = true;
+			Entry.Instance->bIsActive = bActive;
+			Entry.bIsActive = bActive;
+			EquipmentList.MarkItemDirty(Entry);
 			return;
 		}
 	}
+}
 
-	UE_LOG(LogTemp, Warning, TEXT("ActivateItemBySlot: No equipment found in slot %d"), SlotIndex);
+void UHaroEquipmentManagerComponent::ActivateItem(int32 SlotIndex)
+{
+	SetItemActiveState(SlotIndex, true);
 }
 
 void UHaroEquipmentManagerComponent::DeactivateItem(int32 SlotIndex)
 {
-	for (FHaroAppliedEquipmentEntry& Entry : EquipmentList.Entries) // (어차피 최대 2개라 이렇게 해도 될듯.)
-	{
-		if (Entry.SlotIndex == SlotIndex)
-		{
-			// 이미 비활성화되어 있으면 스킵
-			if (!Entry.bIsActive)
-				return;
-
-			// Instance 비활성화 (비주얼, 액터 등)
-			Entry.Instance->OnUnequipped();
-
-			// Handle 비활성화
-			EquipmentList.DeactivateEntryHandles(Entry);
-
-			// 상태 플래그 설정
-			Entry.bIsActive = false;
-			return;
-		}
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("DeactivateItemBySlot: No equipment found in slot %d"), SlotIndex);
+	SetItemActiveState(SlotIndex, false);
 }
 
 
@@ -377,6 +365,25 @@ ULyraEquipmentInstance* UHaroEquipmentManagerComponent::GetFirstInstanceOfType(T
 	return nullptr;
 }
 
+ULyraEquipmentInstance* UHaroEquipmentManagerComponent::GetFirstActiveInstanceOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType)
+{
+	for (const FHaroAppliedEquipmentEntry& Entry : EquipmentList.Entries)
+	{
+		if (Entry.bIsActive) // 먼저 활성화 체크
+		{
+			if (ULyraEquipmentInstance* Instance = Entry.Instance)
+			{
+				if (Instance->IsA(InstanceType))
+				{
+					return Instance;
+				}
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 TArray<ULyraEquipmentInstance*> UHaroEquipmentManagerComponent::GetEquipmentInstancesOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType) const
 {
 	TArray<ULyraEquipmentInstance*> Results;
@@ -387,6 +394,25 @@ TArray<ULyraEquipmentInstance*> UHaroEquipmentManagerComponent::GetEquipmentInst
 			if (Instance->IsA(InstanceType))
 			{
 				Results.Add(Instance);
+			}
+		}
+	}
+	return Results;
+}
+
+TArray<ULyraEquipmentInstance*> UHaroEquipmentManagerComponent::GetActiveEquipmentInstancesOfType(TSubclassOf<ULyraEquipmentInstance> InstanceType) const
+{
+	TArray<ULyraEquipmentInstance*> Results;
+	for (const FHaroAppliedEquipmentEntry& Entry : EquipmentList.Entries)
+	{
+		if (Entry.bIsActive)  // 먼저 활성화 체크
+		{
+			if (ULyraEquipmentInstance* Instance = Entry.Instance)
+			{
+				if (Instance->IsA(InstanceType))
+				{
+					Results.Add(Instance);
+				}
 			}
 		}
 	}

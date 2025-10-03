@@ -152,3 +152,5 @@ FVector UHaroGameplayAbility_WeaponBase::VRandConeNormalDistribution_Haro(const 
         return Dir.GetSafeNormal();
     }
 }
+
+

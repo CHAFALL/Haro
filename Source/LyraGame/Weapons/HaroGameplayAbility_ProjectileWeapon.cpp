@@ -21,6 +21,11 @@ UHaroGameplayAbility_ProjectileWeapon::UHaroGameplayAbility_ProjectileWeapon(con
 
 bool UHaroGameplayAbility_ProjectileWeapon::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
+
+	// 슬롯 활성화 체크
+	if (!IsWeaponSlotActive())
+		return false;
+
 	bool bResult = Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 
 	if (bResult)
@@ -33,7 +38,6 @@ bool UHaroGameplayAbility_ProjectileWeapon::CanActivateAbility(const FGameplayAb
 				*UHaroRangedWeaponInstance::StaticClass()->GetName());
 			bResult = false;
 		}
-		// 현재 입력 타입에 대한 발사 모드가 투사체인지 확인하는 것도 나쁘지 않을듯?
 	}
 
 	return bResult;
