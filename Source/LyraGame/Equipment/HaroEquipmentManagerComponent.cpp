@@ -10,6 +10,9 @@
 #include "LyraEquipmentInstance.h"
 #include "Net/UnrealNetwork.h"
 #include "LyraGameplayTags.h"
+#include "Data/HaroSkillData.h"
+#include "Items/Skill/HaroSkillSelectComponent.h"
+#include "Player/LyraPlayerState.h" 
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroEquipmentManagerComponent)
 
@@ -98,6 +101,106 @@ ULyraAbilitySystemComponent* FHaroEquipmentList::GetAbilitySystemComponent() con
 	return Cast<ULyraAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningActor));
 }
 
+UHaroSkillSelectComponent* FHaroEquipmentList::GetSkillSelectComponent() const
+{
+	if (OwnerComponent)
+	{
+		if (APawn* OwnerPawn = Cast<APawn>(OwnerComponent->GetOwner()))
+		{
+			if (ALyraPlayerState* PS = OwnerPawn->GetPlayerState<ALyraPlayerState>())
+			{
+				return PS->FindComponentByClass<UHaroSkillSelectComponent>();
+			}
+		}
+	}
+	return nullptr;
+}
+
+void FHaroEquipmentList::RegisterSkillHandlesForAbilitySet(const ULyraAbilitySet* AbilitySet, FHaroAppliedEquipmentEntry& Entry, int32 StartIndex, int32 EndIndex)
+{
+	const ULyraEquipmentDefinition* EquipmentDef = GetDefault<ULyraEquipmentDefinition>(Entry.EquipmentDefinition);
+	if (!EquipmentDef || EquipmentDef->EquipmentSkillAbilities.Num() == 0)
+	{
+		return; // 스킬 설정 없으면 스킵
+	}
+
+	UHaroSkillSelectComponent* SkillComp = GetSkillSelectComponent();
+	if (!SkillComp) return;
+
+	ULyraAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	const UHaroSkillData& SkillData = UHaroSkillData::Get();
+	
+	for (TSubclassOf<ULyraGameplayAbility> TargetAbilityClass : EquipmentDef->EquipmentSkillAbilities)
+	{
+		if (!TargetAbilityClass)
+		{
+			continue;
+		}
+
+		// 이 AbilitySet이 추가한 Handle들만 확인
+		for (int32 i = StartIndex; i < EndIndex; ++i)
+		{
+			FGameplayAbilitySpecHandle Handle = Entry.GrantedHandles.AbilitySpecHandles[i];
+			FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Handle);
+
+			if (Spec && Spec->Ability)
+			{
+				if (Spec->Ability->GetClass() == TargetAbilityClass)
+				{
+					FName SkillID = SkillData.FindSkillIDByAbilityClass(TargetAbilityClass);
+
+					if (!SkillID.IsNone())
+					{
+						SkillComp->RegisterSkillHandle(SkillID, Handle);
+
+						UE_LOG(LogTemp, Log,
+							TEXT("[EquipmentList] Registered Skill: %s"),
+							*SkillID.ToString());
+					}
+
+					break;
+				}
+			}
+		}
+	}
+}
+
+void FHaroEquipmentList::UnregisterSkillHandles(const FHaroAppliedEquipmentEntry& Entry)
+{
+	if (!Entry.EquipmentDefinition)
+		return;
+
+	const ULyraEquipmentDefinition* EquipmentDef = GetDefault<ULyraEquipmentDefinition>(Entry.EquipmentDefinition);
+	if (!EquipmentDef || EquipmentDef->EquipmentSkillAbilities.Num() == 0)
+		return;
+
+	UHaroSkillSelectComponent* SkillComp = GetSkillSelectComponent();
+	if (!SkillComp)
+		return;
+
+	const UHaroSkillData& SkillData = UHaroSkillData::Get();
+
+	for (TSubclassOf<ULyraGameplayAbility> AbilityClass : EquipmentDef->EquipmentSkillAbilities)
+	{
+		if (!AbilityClass)
+		{
+			continue;
+		}
+
+		FName SkillID = SkillData.FindSkillIDByAbilityClass(AbilityClass);
+		if (!SkillID.IsNone())
+		{
+			SkillComp->UnregisterSkillHandle(SkillID);
+
+			UE_LOG(LogTemp, Log,
+				TEXT("[EquipmentList] Unregistered Skill: %s"),
+				*SkillID.ToString());
+		}
+	}
+}
+
 ULyraEquipmentInstance* FHaroEquipmentList::AddEntry(TSubclassOf<ULyraEquipmentDefinition> EquipmentDefinition, int32 SlotIndex)
 {
 	ULyraEquipmentInstance* Result = nullptr;
@@ -125,8 +228,17 @@ ULyraEquipmentInstance* FHaroEquipmentList::AddEntry(TSubclassOf<ULyraEquipmentD
 	{
 		for (const TObjectPtr<const ULyraAbilitySet>& AbilitySet : EquipmentCDO->AbilitySetsToGrant)
 		{
+			// (최적화) 현재까지 누적된 Handle 개수 저장
+			int32 HandleCountBefore = NewEntry.GrantedHandles.AbilitySpecHandles.Num();
+
 			// inout해서 그 주입된 handles를 가져오는구먼.
 			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &NewEntry.GrantedHandles, Result);
+
+			// (최적화) 부여 후 Handle 개수
+			int32 HandleCountAfter = NewEntry.GrantedHandles.AbilitySpecHandles.Num();
+
+			// (최적화) 방금 생성된 Handle들과 SkillID 매핑
+			RegisterSkillHandlesForAbilitySet(AbilitySet, NewEntry, HandleCountBefore, HandleCountAfter);
 		}
 	}
 	else
@@ -152,6 +264,9 @@ void FHaroEquipmentList::RemoveEntry(int32 SlotIndex)
 		FHaroAppliedEquipmentEntry& Entry = *EntryIt;
 		if (Entry.SlotIndex == SlotIndex)
 		{
+			// ⭐ 스킬 매핑 해제 (Ability 제거 전에)
+			UnregisterSkillHandles(Entry);
+
 			if (ULyraAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 			{
 				Entry.GrantedHandles.TakeFromAbilitySystem(ASC);

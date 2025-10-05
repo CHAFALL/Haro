@@ -43,33 +43,61 @@ void UHaroSkillData::PostLoad()
 
 void UHaroSkillData::RefreshSkillCache()
 {
-	// 캐시 초기화
 	CachedSkillsByTag.Empty();
+	CachedAbilityClassToSkillID.Empty();
 
-	if (!WeaponSkillDataTable)	return;
+	CacheDefaultSkills(DefaultSkillDataTable);
+	CacheSkillsByCategory(WeaponSkillDataTable);
 
-	// Get하면 될 줄 알았는데 UHaroSkillData 객체 자체는 로드가 되었지만
-	// TSoftObjectPtr<UDataTable> WeaponSkillDataTable는 경로 정보만 가지고 있고 실제 DataTable은 아직 로드가 안되어서
-	// LoadSynchronous()로 해야됨.
-	// -> 이것도 그냥 TSoftObjectPtr 대신에 TObjectPtr로 변경하니 해결됨.
-	if (UDataTable* Table = WeaponSkillDataTable.Get())
+	// 갯수로 올바르게 캐싱 되었는지 파악.
+	UE_LOG(LogTemp, Log,
+		TEXT("[SkillData] Loaded %d default skills, %d skill categories"),
+		CachedAbilityClassToSkillID.Num(),
+		CachedSkillsByTag.Num());
+}
+
+void UHaroSkillData::CacheDefaultSkills(UDataTable* Table)
+{
+	if (!Table)
 	{
-		Table->ForeachRow<FHaroSkillDataRow>("RefreshSkillCache",
-			[this](const FName& RowName, const FHaroSkillDataRow& Row)
-			{
-				if (Row.CategoryTag.IsValid())
-				{
-					// Entry 생성
-					FHaroSkillDataEntry Entry;
-					Entry.SkillID = RowName;
-					Entry.SkillData = Row;
-
-					// 해당 태그의 배열을 찾거나 새로 생성하고 스킬 Entry를 추가
-					CachedSkillsByTag.FindOrAdd(Row.CategoryTag).Skills.Add(Entry);
-				}
-				return true; // continue iteration
-			});
+		return;
 	}
+
+	Table->ForeachRow<FHaroSkillDataRow>("CacheDefaultSkills",
+		[this](const FName& RowName, const FHaroSkillDataRow& Row)
+		{
+			if (UClass* LoadedClass = Row.AbilityClass.LoadSynchronous())
+			{
+				CachedAbilityClassToSkillID.Add(LoadedClass, RowName);
+			}
+
+			return true;
+		});
+}
+
+void UHaroSkillData::CacheSkillsByCategory(UDataTable* Table)
+{
+	if (!Table)
+	{
+		return;
+	}
+
+	Table->ForeachRow<FHaroSkillDataRow>("CacheSkillsByCategory",
+		[this](const FName& RowName, const FHaroSkillDataRow& Row)
+		{
+			if (Row.CategoryTag.IsValid())
+			{
+				// Entry 생성
+				FHaroSkillDataEntry Entry;
+				Entry.SkillID = RowName;
+				Entry.SkillData = Row;
+
+				// 해당 태그의 배열을 찾거나 새로 생성하고 스킬 Entry를 추가
+				CachedSkillsByTag.FindOrAdd(Row.CategoryTag).Skills.Add(Entry);
+			}
+
+			return true; // continue iteration
+		});
 }
 
 TArray<FHaroSkillDataEntry> UHaroSkillData::GetSkillsByTag(const FGameplayTag& Tag) const
@@ -80,3 +108,22 @@ TArray<FHaroSkillDataEntry> UHaroSkillData::GetSkillsByTag(const FGameplayTag& T
 	// 찾았으면 Skills 배열 반환, 못 찾으면 빈 배열 반환
 	return Found ? Found->Skills : TArray<FHaroSkillDataEntry>();
 }
+
+FName UHaroSkillData::FindSkillIDByAbilityClass(TSubclassOf<ULyraGameplayAbility> AbilityClass) const
+{
+	if (!AbilityClass)
+	{
+		return NAME_None;
+	}
+
+	// 캐시 검색 (디폴트 스킬만)
+	if (const FName* FoundSkillID = CachedAbilityClassToSkillID.Find(AbilityClass))
+	{
+		return *FoundSkillID;
+	}
+
+	return NAME_None;
+}
+
+
+

@@ -30,7 +30,7 @@ public:
     TSoftClassPtr<ULyraGameplayAbility> AbilityClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
-    int32 SkillLevel = 1;
+    int32 SkillLevel = 1; // 여기서의 스킬 레벨은 이펙트 관련으로 실제 레벨과는 다를 수 있음.
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FGameplayTag InputTag; 

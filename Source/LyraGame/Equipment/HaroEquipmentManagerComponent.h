@@ -13,11 +13,13 @@ class ULyraAbilitySystemComponent;
 class ULyraEquipmentDefinition;
 class ULyraEquipmentInstance;
 class UHaroEquipmentManagerComponent; // 상호 참조 대비
+class UHaroSkillSelectComponent;
 class UObject;
 struct FFrame;
 struct FHaroEquipmentList; //
 struct FNetDeltaSerializeInfo;
 struct FReplicationFlags;
+
 
 /** A single piece of applied equipment */
 USTRUCT(BlueprintType)
@@ -88,6 +90,11 @@ public:
 
 private:
 	ULyraAbilitySystemComponent* GetAbilitySystemComponent() const;
+
+	UHaroSkillSelectComponent* GetSkillSelectComponent() const;
+
+	void RegisterSkillHandlesForAbilitySet( const ULyraAbilitySet* AbilitySet, FHaroAppliedEquipmentEntry& Entry, int32 StartIndex, int32 EndIndex);
+	void UnregisterSkillHandles(const FHaroAppliedEquipmentEntry& Entry);
 
 	friend UHaroEquipmentManagerComponent; // UHaroEquipmentManagerComponent 이 클래스에서만 접근 가능하게.
 

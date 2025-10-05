@@ -61,15 +61,23 @@ public:
 
 private:
 	void RefreshSkillCache();
+	void CacheDefaultSkills(UDataTable* Table);
+	void CacheSkillsByCategory(UDataTable* Table);
 
 public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FHaroSkillDataEntry> GetSkillsByTag(const FGameplayTag& Tag) const;
 
+	// 현재로써는 디폴트 스킬에서 찾는거로만 해둠.
+	UFUNCTION(BlueprintCallable)
+	FName FindSkillIDByAbilityClass(TSubclassOf<ULyraGameplayAbility> AbilityClass) const;
+
 public:
-	// 원본 TSoftObjectPtr 대신에 TObjectPtr로 변경.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UDataTable> WeaponSkillDataTable;
+	TObjectPtr<UDataTable> DefaultSkillDataTable; // 미리 로드됨.
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UDataTable> WeaponSkillDataTable; // 필요시 로드됨.
 
 private:
 	// 캐시 
@@ -79,4 +87,7 @@ private:
 	UPROPERTY()
 	TMap<FGameplayTag, FHaroSkillDataArray> CachedSkillsByTag;
 
+	// AbilityClass → SkillID 캐시 (디폴트 스킬들만)
+	UPROPERTY()
+	TMap<TSubclassOf<ULyraGameplayAbility>, FName> CachedAbilityClassToSkillID;
 };

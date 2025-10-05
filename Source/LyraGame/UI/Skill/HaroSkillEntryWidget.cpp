@@ -52,15 +52,14 @@ void UHaroSkillEntryWidget::OnButtonClicked()
 	// 해당 스킬을 골랐다는 로직 처리
     if (UHaroSkillSelectComponent* SkillComp = GetSkillSelectComponent())
     {
-        // 스킬 부여를 성공하면
-        if (SkillComp->ApplySelectedSkill(SkillData))
+        // 스킬 부여하고
+        SkillComp->ServerApplySelectedSkill(SkillData);
+        
+        // 창 닫기 -> 이렇게 직접참조 하는 방식 말고도 델리게이트 방식도 가능. (스킬 선택 시 여러 시스템 반응 필요해진다면..)
+        if (UHaroSkillSelectionWidget* SkillSelectionWidget = CachedOwnerWidget.Get())
         {
-            // 창 닫기 -> 이렇게 직접참조 하는 방식 말고도 델리게이트 방식도 가능. (스킬 선택 시 여러 시스템 반응 필요해진다면..)
-            if (UHaroSkillSelectionWidget* SkillSelectionWidget = CachedOwnerWidget.Get())
-            {
-                SkillSelectionWidget->DeactivateWidget();
-                SkillSelectionWidget = nullptr;
-            }
+            SkillSelectionWidget->DeactivateWidget();
+            SkillSelectionWidget = nullptr;
         }
     }
 

@@ -15,7 +15,9 @@ class LYRAGAME_API UHaroSkillSelectComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	UHaroSkillSelectComponent();
+	UHaroSkillSelectComponent(const FObjectInitializer& ObjectInitializer);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// 태그에 따라 무기 스킬로 할지, 원소 스킬로 할지 등을 결정해주는 메인 함수 
 	// 망치면 Skill.Weapon (얘는 무기인지만 알려주면 됨) -> GenerateSkillOptionsForWeapons()
@@ -23,8 +25,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Skill Selection")
 	TArray<FHaroSkillDataEntry> GenerateSkillOptions(const FGameplayTag& SkillCategory);
 
-	UFUNCTION(BlueprintCallable, Category = "Skill Selection")
-	bool ApplySelectedSkill(const FHaroSkillDataEntry& SelectedSkill);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Skill Selection")
+	void ServerApplySelectedSkill(const FHaroSkillDataEntry& SelectedSkill);
 
 	// 소유한 스킬 맵 조작 관련 헬퍼 함수들 (맵만 조작함.) -> 이것도 playerState로 넘어갈지도.
 	bool RegisterSkillHandle(const FName& SkillID, const FGameplayAbilitySpecHandle& Handle);
@@ -56,9 +58,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Current State")
 	TArray<FGameplayTag> CurrentWeaponTags;
 
+	// 클라 UI 표시용
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	TArray<FName> OwnedSkillIDs;
+
 	// 현재 플레이어가 보유한 스킬 {ID : Handle} -> playerstate로 뺄듯?
 	UPROPERTY(BlueprintReadOnly, Category = "Current State")
-	TMap<FName, FGameplayAbilitySpecHandle> OwnedSkillHandles;
+	TMap<FName, FGameplayAbilitySpecHandle> OwnedSkillHandles; // 서버 전용
 
 	// 한 번에 제공할 스킬 옵션 개수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
