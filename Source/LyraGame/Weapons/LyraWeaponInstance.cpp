@@ -79,8 +79,16 @@ float ULyraWeaponInstance::GetTimeSinceLastInteractedWith() const
 
 TSubclassOf<UAnimInstance> ULyraWeaponInstance::PickBestAnimLayer(bool bEquipped, const FGameplayTagContainer& CosmeticTags) const
 {
-	const FLyraAnimLayerSelectionSet& SetToQuery = (bEquipped ? EquippedAnimSet : UneuippedAnimSet);
+	const FLyraAnimLayerSelectionSet& SetToQuery = (bEquipped ? EquippedAnimSet_3P : UnequippedAnimSet_3P);
 	return SetToQuery.SelectBestLayer(CosmeticTags);
+}
+
+UPARAM(DisplayName = "Anim Layer 3P")TSubclassOf<UAnimInstance> ULyraWeaponInstance::PickBestAnimLayerWithFirstPerson(bool bEquipped, const FGameplayTagContainer& CosmeticTags, TSubclassOf<UAnimInstance>& AnimLayer_1P) const
+{
+	const FLyraAnimLayerSelectionSet& SetToQuery_3P = (bEquipped ? EquippedAnimSet_3P : UnequippedAnimSet_3P);
+	const FLyraAnimLayerSelectionSet& SetToQuery_1P = (bEquipped ? EquippedAnimSet_1P : UnequippedAnimSet_1P);
+	AnimLayer_1P = SetToQuery_1P.SelectBestLayer(CosmeticTags);
+	return SetToQuery_3P.SelectBestLayer(CosmeticTags);
 }
 
 const FPlatformUserId ULyraWeaponInstance::GetOwningUserId() const

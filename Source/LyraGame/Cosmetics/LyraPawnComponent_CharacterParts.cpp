@@ -172,6 +172,18 @@ bool FLyraCharacterPartList::SpawnActorForEntry(FLyraAppliedCharacterPartEntry& 
 
 				if (AActor* SpawnedActor = PartComponent->GetChildActor())
 				{
+					// (추가 1인칭)
+					SpawnedActor->SetOwner(OwnerComponent->GetOwner());
+
+					for (const auto Component : SpawnedActor->GetComponents())
+					{
+						// PrimitiveComponent는 Unreal Engine에서 렌더링(화면에 보이는 것)과 물리 충돌을 담당하는 기본 컴포넌트
+						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
+						{
+							PrimitiveComponent->SetOwnerNoSee(true);
+						}
+					}
+
 					switch (Entry.Part.CollisionMode)
 					{
 					case ECharacterCustomizationCollisionMode::UseCollisionFromCharacterPart:

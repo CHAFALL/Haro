@@ -146,6 +146,10 @@ public:
 
 	virtual bool UpdateSharedReplication();
 
+	// (1인칭 추가)
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lyra|Character")
+	FORCEINLINE USkeletalMeshComponent* GetFirstPersonMesh() const { return Mesh1P; }
+
 protected:
 
 	virtual void OnAbilitySystemInitialized();
@@ -188,6 +192,10 @@ protected:
 	virtual bool CanJumpInternal_Implementation() const;
 
 private:
+
+	// (1인칭 추가)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lyra|Character", Meta = (AllowPrivateAccess = "true"))
+	USkeletalMeshComponent* Mesh1P;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lyra|Character", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ULyraPawnExtensionComponent> PawnExtComponent;

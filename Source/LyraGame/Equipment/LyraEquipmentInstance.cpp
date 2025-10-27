@@ -78,7 +78,7 @@ void ULyraEquipmentInstance::SpawnEquipmentActors(const TArray<FLyraEquipmentAct
 		USceneComponent* AttachTarget = OwningPawn->GetRootComponent();
 		if (ACharacter* Char = Cast<ACharacter>(OwningPawn))
 		{
-			AttachTarget = Char->GetMesh();
+			AttachTarget = Char->GetMesh(); // 
 		}
 
 		for (const FLyraEquipmentActorToSpawn& SpawnInfo : ActorsToSpawn)

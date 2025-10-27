@@ -40,11 +40,32 @@ public:
 	float GetTimeSinceLastInteractedWith() const;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation)
-	FLyraAnimLayerSelectionSet EquippedAnimSet;
+	// (이름 변경.)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	FLyraAnimLayerSelectionSet EquippedAnimSet_3P;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation)
-	FLyraAnimLayerSelectionSet UneuippedAnimSet;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	FLyraAnimLayerSelectionSet UnequippedAnimSet_3P;
+
+	// (추가 1인칭) - Haro를 또 만들까 했는데 엮인게 너무 많아서 그냥 이렇게 하기로 함. (함수 추가 정도.)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	FLyraAnimLayerSelectionSet EquippedAnimSet_1P;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	FLyraAnimLayerSelectionSet UnequippedAnimSet_1P;
+
+	// 블루프린트에서 하던 것을 C++에서 하려고 함. (아래 4개)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* EquippedAnim_3P;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* UnequippedAnim_3P;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* EquippedAnim_1P;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* UnequippedAnim_1P;
 
 	/**
 	 * Device properties that should be applied while this weapon is equipped.
@@ -57,6 +78,13 @@ protected:
 	// Choose the best layer from EquippedAnimSet or UneuippedAnimSet based on the specified gameplay tags
 	UFUNCTION(BlueprintCallable, BlueprintPure=false, Category=Animation)
 	TSubclassOf<UAnimInstance> PickBestAnimLayer(bool bEquipped, const FGameplayTagContainer& CosmeticTags) const;
+
+	// 반환값의 표시이름을 Anim Layer 3P로 하겠다. (무슨 값이 반환되는지를 명확히 하기 위함.)
+	// 참조 파라미터 (Anim Layer 1P), 반환값 (Anim Layer 3P)로 해서 블루프린트에서 출력핀이 2개 보이게
+	// 참조 파라미터는 출력 핀으로 자동 변환됨을 이용!!
+	// 블루프린트는 함수 시그니처가 아닌 함수 이름만으로 구별하므로 이름도 바꿔줘야 됨! 
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = Animation)
+	virtual UPARAM(DisplayName = "Anim Layer 3P") TSubclassOf<UAnimInstance> PickBestAnimLayerWithFirstPerson(bool bEquipped, const FGameplayTagContainer& CosmeticTags, TSubclassOf<UAnimInstance>& AnimLayer_1P) const;
 
 	/** Returns the owning Pawn's Platform User ID */
 	UFUNCTION(BlueprintCallable)
