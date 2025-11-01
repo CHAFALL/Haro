@@ -26,6 +26,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh3P() const { return WeaponMesh_3P; }
 
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	FORCEINLINE bool IsADS() const { return bIsADS; }
+
+	void OnWeaponActivated(); // 무기가 활성화될 때 호출될 함수
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	USkeletalMeshComponent* WeaponMesh_1P;
@@ -38,6 +43,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
 	float WeaponCameraOffset = 30.0f;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon")
+	bool bIsADS = false; // 줌 기능 여부.
 
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	USkeletalMeshComponent* GetProperWeaponMesh() const;

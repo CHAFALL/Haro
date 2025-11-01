@@ -45,8 +45,8 @@ bool ULyraGameplayAbility_FromEquipment::IsWeaponSlotActive() const
 
 	return Equipment->bIsActive;
 	
-	// 원래는 태그 방식으로 했었는데 ASC를 계속 제대로 못 잡아내는 바람에 이 방식으로 변경.
-	// 이 방식도 괜찮은듯!
+	// 태그 방식으로 할까 했는데 지금이 몇번 슬롯이 활성화되었고 현재 무기는 몇번 슬롯의 무기이다에 대한 처리가 
+	// 추가로 필요해서 오히려 이 방식이 낫다고 판단.
 }
 
 

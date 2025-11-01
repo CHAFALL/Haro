@@ -27,6 +27,7 @@ struct FFrame;
 struct FGameplayTag;
 struct FGameplayTagContainer;
 
+class AHaroWeaponBase;
 
 /**
  * FLyraReplicatedAcceleration: Compressed representation of acceleration
@@ -146,9 +147,26 @@ public:
 
 	virtual bool UpdateSharedReplication();
 
+#pragma region CUSTOM CODE
+
 	// (1인칭 추가)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lyra|Character")
 	FORCEINLINE USkeletalMeshComponent* GetFirstPersonMesh() const { return Mesh1P; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lyra|Character")
+	FORCEINLINE ULyraCameraComponent* GetCameraComponent() const { return CameraComponent; }
+
+	// 무기 코드
+	UFUNCTION(BlueprintPure, Category = "Lyra|Character")
+	FORCEINLINE AHaroWeaponBase* GetCurrentWeapon() const { return CurrentWeapon; }
+
+	UFUNCTION(BlueprintCallable, Category = "Lyra|Character")
+	void SetCurrentWeapon(AHaroWeaponBase* NewWeapon);
+
+	UFUNCTION(BlueprintCallable, Category = "Lyra|Character")
+	void OnPlayerEquippedNewWeapon(float WeaponOffset);
+
+#pragma endregion
 
 protected:
 
@@ -196,6 +214,10 @@ private:
 	// (1인칭 추가)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lyra|Character", Meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* Mesh1P;
+
+	// 무기 코드
+	UPROPERTY()
+	AHaroWeaponBase* CurrentWeapon;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lyra|Character", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ULyraPawnExtensionComponent> PawnExtComponent;

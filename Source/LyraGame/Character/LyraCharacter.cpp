@@ -17,6 +17,8 @@
 #include "System/LyraSignificanceManager.h"
 #include "TimerManager.h"
 
+#include "Animation/LyraAnimInstance.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraCharacter)
 
 class AActor;
@@ -45,6 +47,9 @@ ALyraCharacter::ALyraCharacter(const FObjectInitializer& ObjectInitializer)
 	check(MeshComp);
 	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));  // Rotate mesh to be X forward since it is exported as Y forward.
 	MeshComp->SetCollisionProfileName(NAME_LyraCharacterCollisionProfile_Mesh);
+	
+	// (추가)
+	MeshComp->bCastHiddenShadow = true;
 
 	ULyraCharacterMovementComponent* LyraMoveComp = CastChecked<ULyraCharacterMovementComponent>(GetCharacterMovement());
 	LyraMoveComp->GravityScale = 1.0f;
@@ -199,6 +204,22 @@ UAbilitySystemComponent* ALyraCharacter::GetAbilitySystemComponent() const
 	}
 
 	return PawnExtComponent->GetLyraAbilitySystemComponent();
+}
+
+void ALyraCharacter::SetCurrentWeapon(AHaroWeaponBase* NewWeapon)
+{
+	CurrentWeapon = NewWeapon;
+}
+
+void ALyraCharacter::OnPlayerEquippedNewWeapon(float WeaponOffset)
+{
+	if (IsValid(Mesh1P))
+	{
+		if (ULyraAnimInstance* AnimInstance = Cast<ULyraAnimInstance>(Mesh1P->GetAnimInstance()))
+		{
+			AnimInstance->OnNewWeaponEquipped(WeaponOffset);
+		}
+	}
 }
 
 void ALyraCharacter::OnAbilitySystemInitialized()

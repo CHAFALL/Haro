@@ -13,6 +13,7 @@
 #include "Data/HaroSkillData.h"
 #include "Items/Skill/HaroSkillSelectComponent.h"
 #include "Player/LyraPlayerState.h" 
+#include "Weapons/HaroWeaponBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(HaroEquipmentManagerComponent)
 
@@ -362,6 +363,12 @@ void UHaroEquipmentManagerComponent::SetItemActiveState(int32 SlotIndex, bool bA
 					{
 						Actor->SetActorHiddenInGame(false);
 						Actor->SetActorEnableCollision(true);
+
+						// 무기인 경우 OnWeaponActivated 호출
+						if (AHaroWeaponBase* Weapon = Cast<AHaroWeaponBase>(Actor))
+						{
+							Weapon->OnWeaponActivated();
+						}
 					}
 				}
 				Entry.Instance->OnEquipped();

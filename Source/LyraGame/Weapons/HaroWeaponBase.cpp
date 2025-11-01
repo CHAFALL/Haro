@@ -39,11 +39,28 @@ void AHaroWeaponBase::BeginPlay()
 			WeaponMesh_1P->SetRelativeRotation(FRotator(WeaponRotPitch, WeaponRotYaw, WeaponRotRoll));
 			WeaponMesh_1P->SetRelativeLocation(FVector(WeaponPosX, WeaponPosY, WeaponPosZ));
 
-			/*Character->SetCurrentWeapon(this);
-			Character->OnPlayerEquippedNewWeapon(WeaponCameraOffset);*/
+			Character->SetCurrentWeapon(this);
+			Character->OnPlayerEquippedNewWeapon(WeaponCameraOffset); // Good
 		}
 	}
 }
+
+// 활성/ 비활성화 방식이라 이를 추가.
+void AHaroWeaponBase::OnWeaponActivated()
+{
+	APawn* PawnOwner = Cast<APawn>(GetOwner());
+	if (GetNetMode() != NM_DedicatedServer)
+	{
+		if (ALyraCharacter* Character = Cast<ALyraCharacter>(PawnOwner))
+		{
+			// 무기 상태만 캐릭터에게 알려줌 (부착 작업은 생략) -> 만약에 3인칭 <-> 1인칭을 왔다갔다하게 되고 이에 위치가 건드려진다면 위의 3줄도 가져오는 것이 좋음.
+			Character->SetCurrentWeapon(this);
+			Character->OnPlayerEquippedNewWeapon(WeaponCameraOffset);
+		}
+	}
+}
+
+
 
 USkeletalMeshComponent* AHaroWeaponBase::GetProperWeaponMesh() const
 {
